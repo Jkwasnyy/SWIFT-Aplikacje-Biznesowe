@@ -1,36 +1,153 @@
-<Document>
-  <GrpHdr>
-    <MsgId>MSG-20260512-0001</MsgId>
-    <CreDtTm>2026-05-12T09:30:00Z</CreDtTm>
-  </GrpHdr>
-  <CstmrCdtTrfInitn>
-    <PmtInf>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+
+  <FIToFICstmrCdtTrf>
+
+    <!-- Nagłówek grupowy komunikatu -->
+    <GrpHdr>
+
+      <!-- Unikalny identyfikator wiadomości -->
+      <MsgId>MSG-20260512-0001</MsgId>
+
+      <!-- Data i czas utworzenia komunikatu -->
+      <CreDtTm>2026-05-12T09:30:00Z</CreDtTm>
+
+      <!-- Liczba transakcji w komunikacie -->
+      <NbOfTxs>1</NbOfTxs>
+
+      <!-- Informacje o sposobie rozliczenia -->
+      <SttlmInf>
+
+        <!-- Metoda rozliczenia -->
+        <SttlmMtd>INDA</SttlmMtd>
+
+      </SttlmInf>
+    </GrpHdr>
+
+    <!-- Szczegóły pojedynczego przelewu -->
+    <CdtTrfTxInf>
+
+      <!-- Identyfikatory płatności -->
       <PmtId>
+
+        <!-- Identyfikator instrukcji przelewu -->
         <InstrId>INST-20260512-0001</InstrId>
+
+        <!-- Identyfikator end-to-end transakcji -->
+        <EndToEndId>NOTPROVIDED</EndToEndId>
+
+        <!-- Globalny identyfikator śledzenia przelewu -->
+        <UETR>8a776f2b-300b-43e2-a703-bb84c18ad518</UETR>
+
       </PmtId>
+
+      <!-- Kwota rozliczeniowa między bankami -->
+      <IntrBkSttlmAmt Ccy="PLN">100.00</IntrBkSttlmAmt>
+
+      <!-- Data rozliczenia -->
+      <IntrBkSttlmDt>2026-05-12</IntrBkSttlmDt>
+
+      <!-- Kwota zlecona odbiorcy -->
+      <InstdAmt Ccy="PLN">100.00</InstdAmt>
+
+      <!-- Podział kosztów -->
+      <ChrgBr>SHAR</ChrgBr>
+
+      <!-- Bank wysyłający -->
+      <InstgAgt>
+        <FinInstnId>
+
+          <!-- Kod BIC/SWIFT banku nadawcy -->
+          <BICFI>PLBANK1XXX</BICFI>
+
+        </FinInstnId>
+      </InstgAgt>
+
+      <!-- Bank odbierający -->
+      <InstdAgt>
+        <FinInstnId>
+
+          <!-- Kod BIC/SWIFT banku odbiorcy -->
+          <BICFI>UKBANK1XXX</BICFI>
+
+        </FinInstnId>
+      </InstdAgt>
+
+      <!-- Dane nadawcy -->
       <Dbtr>
+
+        <!-- Nazwa firmy wysyłającej -->
         <Nm>Polska Spółka Importowa</Nm>
+
+        <!-- Adres nadawcy -->
+        <PstlAdr>
+          <StrtNm>Importowa</StrtNm>
+          <BldgNb>10</BldgNb>
+          <TwnNm>Warszawa</TwnNm>
+          <Ctry>PL</Ctry>
+        </PstlAdr>
+
       </Dbtr>
+
+      <!-- Konto nadawcy -->
+      <DbtrAcct>
+        <Id>
+          <IBAN>PL61109010140000071219812874</IBAN>
+        </Id>
+      </DbtrAcct>
+
+      <!-- Bank obsługujący nadawcę -->
       <DbtrAgt>
         <FinInstnId>
           <BICFI>PLBANK1XXX</BICFI>
         </FinInstnId>
       </DbtrAgt>
-      <Cdtr>
-        <Nm>London Trading Ltd</Nm>
-      </Cdtr>
+
+      <!-- Bank obsługujący odbiorcę -->
       <CdtrAgt>
         <FinInstnId>
           <BICFI>UKBANK1XXX</BICFI>
         </FinInstnId>
       </CdtrAgt>
-      <Amt>
-        <InstdAmt Ccy="PLN">100.00</InstdAmt>
-      </Amt>
-      <ChrgBr>SLEV</ChrgBr>
+
+      <!-- Dane odbiorcy -->
+      <Cdtr>
+
+        <!-- Nazwa firmy odbierającej -->
+        <Nm>London Trading Ltd</Nm>
+
+        <!-- Adres odbiorcy -->
+        <PstlAdr>
+          <StrtNm>King Street</StrtNm>
+          <BldgNb>25</BldgNb>
+          <TwnNm>London</TwnNm>
+          <Ctry>GB</Ctry>
+        </PstlAdr>
+
+      </Cdtr>
+
+      <!-- Konto odbiorcy -->
+      <CdtrAcct>
+        <Id>
+          <Othr>
+
+            <!-- Numer rachunku odbiorcy -->
+            <Id>GB29NWBK60161331926819</Id>
+
+          </Othr>
+        </Id>
+      </CdtrAcct>
+
+      <!-- Informacja dla odbiorcy -->
       <RmtInf>
+
+        <!-- Tytuł przelewu -->
         <Ustrd>Invoice INV-2026-0512</Ustrd>
+
       </RmtInf>
-    </PmtInf>
-  </CstmrCdtTrfInitn>
+
+    </CdtTrfTxInf>
+
+  </FIToFICstmrCdtTrf>
 </Document>

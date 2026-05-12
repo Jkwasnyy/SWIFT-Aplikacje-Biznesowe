@@ -1,7 +1,5 @@
 import requests
 
-
-
 def forward_message(url, xml, headers=None, timeout=3.0):
     request_headers = {"Content-Type": "application/xml"}
     if headers:
