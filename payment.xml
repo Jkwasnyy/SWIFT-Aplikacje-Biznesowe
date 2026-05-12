@@ -1,15 +1,36 @@
 <Document>
+  <GrpHdr>
+    <MsgId>MSG-20260512-0001</MsgId>
+    <CreDtTm>2026-05-12T09:30:00Z</CreDtTm>
+  </GrpHdr>
   <CstmrCdtTrfInitn>
     <PmtInf>
+      <PmtId>
+        <InstrId>INST-20260512-0001</InstrId>
+      </PmtId>
       <Dbtr>
-        <Nm>PLBANK1XXX</Nm>
+        <Nm>Polska Spółka Importowa</Nm>
       </Dbtr>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>PLBANK1XXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
       <Cdtr>
-        <Nm>UKBANK1XXX</Nm>
+        <Nm>London Trading Ltd</Nm>
       </Cdtr>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>UKBANK1XXX</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
       <Amt>
         <InstdAmt Ccy="PLN">100.00</InstdAmt>
       </Amt>
+      <ChrgBr>SLEV</ChrgBr>
+      <RmtInf>
+        <Ustrd>Invoice INV-2026-0512</Ustrd>
+      </RmtInf>
     </PmtInf>
   </CstmrCdtTrfInitn>
 </Document>
