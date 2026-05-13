@@ -1,10 +1,11 @@
 import xml.etree.ElementTree as ET
-
 from app.models.payment import PaymentMessage
+
+NS = {"ns": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08"}
 
 
 def _find_text(root, xpath, default=""):
-    element = root.find(xpath)
+    element = root.find(xpath, NS)
     if element is None or element.text is None:
         return default
     return element.text.strip()
@@ -13,25 +14,79 @@ def _find_text(root, xpath, default=""):
 def parse_xml(xml_string):
     root = ET.fromstring(xml_string)
 
-    amount_element = root.find(".//InstdAmt")
+    # =========================
+    # AMOUNTS
+    # =========================
+    amount_element = root.find(".//ns:InstdAmt", NS)
+    intrbk_element = root.find(".//ns:IntrBkSttlmAmt", NS)
+
     if amount_element is None or amount_element.text is None:
-        raise ValueError("Missing instructed amount")
+        raise ValueError("Missing InstdAmt")
 
-    sender_name = _find_text(root, ".//Dbtr/Nm")
-    sender_bic = _find_text(root, ".//DbtrAgt//BICFI", sender_name)
-    receiver_name = _find_text(root, ".//Cdtr/Nm")
-    receiver_bic = _find_text(root, ".//CdtrAgt//BICFI", receiver_name)
+    amount = amount_element.text.strip()
 
+    # ✔ SAFE CURRENCY RESOLUTION (SWIFT STYLE PRIORITY)
+    currency = (
+        amount_element.get("Ccy")
+        or (intrbk_element.get("Ccy") if intrbk_element is not None else "")
+    )
+
+    # =========================
+    # SENDER
+    # =========================
+    sender_name = _find_text(root, ".//ns:Dbtr/ns:Nm")
+    sender_bic = _find_text(root, ".//ns:DbtrAgt/ns:FinInstnId/ns:BICFI")
+    sender_account = _find_text(root, ".//ns:DbtrAcct/ns:Id/ns:IBAN")
+
+    # =========================
+    # RECEIVER
+    # =========================
+    receiver_name = _find_text(root, ".//ns:Cdtr/ns:Nm")
+    receiver_bic = _find_text(root, ".//ns:CdtrAgt/ns:FinInstnId/ns:BICFI")
+    receiver_account = _find_text(root, ".//ns:CdtrAcct/ns:Id/ns:Othr/ns:Id")
+
+    # =========================
+    # IDS
+    # =========================
+    message_id = _find_text(root, ".//ns:GrpHdr/ns:MsgId")
+    instruction_id = _find_text(root, ".//ns:PmtId/ns:InstrId")
+    creation_datetime = _find_text(root, ".//ns:GrpHdr/ns:CreDtTm")
+
+    end_to_end_id = _find_text(root, ".//ns:PmtId/ns:EndToEndId")
+    uetr = _find_text(root, ".//ns:PmtId/ns:UETR")
+
+    # =========================
+    # SETTLEMENT
+    # =========================
+    charge_bearer = _find_text(root, ".//ns:ChrgBr", "SHAR")
+    settlement_method = _find_text(root, ".//ns:SttlmInf/ns:SttlmMtd")
+    settlement_date = _find_text(root, ".//ns:IntrBkSttlmDt")
+
+    # =========================
+    # FINAL MODEL
+    # =========================
     return PaymentMessage(
-        message_id=_find_text(root, ".//GrpHdr/MsgId"),
-        instruction_id=_find_text(root, ".//PmtId/InstrId"),
-        creation_datetime=_find_text(root, ".//GrpHdr/CreDtTm"),
-        charge_bearer=_find_text(root, ".//ChrgBr", "SLEV"),
+        message_id=message_id,
+        instruction_id=instruction_id,
+        creation_datetime=creation_datetime,
+
+        end_to_end_id=end_to_end_id,
+        uetr=uetr,
+
+        charge_bearer=charge_bearer,
+        settlement_method=settlement_method,
+        settlement_date=settlement_date,
+
         sender_name=sender_name,
         sender_bic=sender_bic,
+        sender_account=sender_account,
+
         receiver_name=receiver_name,
         receiver_bic=receiver_bic,
-        amount=amount_element.text.strip(),
-        currency=amount_element.attrib.get("Ccy", "").strip(),
-        remittance_info=_find_text(root, ".//RmtInf/Ustrd"),
+        receiver_account=receiver_account,
+
+        amount=amount,
+        currency=currency,
+
+        remittance_info=_find_text(root, ".//ns:RmtInf/ns:Ustrd"),
     )

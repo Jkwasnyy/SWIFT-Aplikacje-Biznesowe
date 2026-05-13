@@ -4,7 +4,6 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-
 def get_bank_name(port):
     return {
         3001: "Bank Polska 1",
@@ -15,29 +14,50 @@ def get_bank_name(port):
         3006: "Bank USA 2",
     }.get(port, f"Bank {port}")
 
+
 @app.route("/receive", methods=["POST"])
 def receive():
+
+    PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 3001
+
     payload = request.data.decode("utf-8")
+
     message_id = request.headers.get("X-SWIFT-Message-Id", "unknown")
     currency = request.headers.get("X-SWIFT-Currency", "")
+    uetr = request.headers.get("X-SWIFT-UETR", "")
+    settlement_date = request.headers.get("X-SWIFT-Settlement-Date", "")
+
     bank_name = get_bank_name(PORT)
 
     print(f"[{bank_name}] RECEIVED {datetime.utcnow().isoformat()}Z")
     print(f"Message-Id: {message_id}")
+    print(f"UETR: {uetr}")
+    print(f"Settlement-Date: {settlement_date}")
+    print("CURRENCY HEADER:", currency)
     print(payload)
 
     if currency not in {"PLN", "EUR", "USD", "GBP"}:
         return {"status": "rejected", "reason": "unsupported_currency"}, 422
 
-    if "<InstdAmt" not in payload:
-        return {"status": "rejected", "reason": "invalid_payload"}, 400
+    if "<FIToFICstmrCdtTrf" not in payload:
+        return {"status": "rejected", "reason": "invalid_pacs008"}, 400
+
+    if "<UETR>" not in payload:
+        return {"status": "rejected", "reason": "missing_uetr"}, 400
+
+    if "<IntrBkSttlmAmt" not in payload:
+        return {"status": "rejected", "reason": "missing_settlement_amount"}, 400
+
+    print("XML CHECK:", payload)
 
     return {
         "status": "accepted",
         "bank": bank_name,
         "received_at": datetime.utcnow().isoformat() + "Z",
         "message_id": message_id,
+        "uetr": uetr,
     }, 202
+
 
 if __name__ == "__main__":
     PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 3001
