@@ -144,24 +144,12 @@ W tym symulatorze to pole ustawia bank wysyłający jeszcze przed wysłaniem wia
 - forward wiadomości
 - logowanie operacji
 
-## Realistyczne rozszerzenia (dodane)
+## Realistyczne rozszerzenia
 
 - **OAuth2 (mock)**: prosty endpoint `/auth/token` umożliwia wydanie tokenu typu `Bearer` dla testowego klienta. Endpointy `/swift/message` i `/swift/cancel/<uetr>` wymagają tokenu.
 - **Routing wieloskokowy**: topologia sieci banków znajduje się w `app/core/config.py` i jest używana przez `app/services/router.py` do wyznaczania trasy (BFS) z banku A do banku B przez banki pośredniczące.
 - **Okno anulowania**: wiadomości są teraz planowane do wysłania z opóźnieniem (`FORWARD_DELAY_SECONDS` w `app/core/config.py`). W czasie opóźnienia można anulować przelew przez `POST /swift/cancel/<uetr>`.
 - **Konfiguracja**: ustawienia OAuth, sieci banków i polityki forwarding/cancel znajdują się w `app/core/config.py` dla łatwej edycji.
-
-Zmienione pliki: [app/core/config.py](app/core/config.py), [app/core/auth.py](app/core/auth.py), [app/services/scheduler.py](app/services/scheduler.py), [app/services/router.py](app/services/router.py), [app/api/routes.py](app/api/routes.py)
-
-## Co można jeszcze dodać, żeby było bliżej prawdziwego SWIFT-a
-
-- Integracja z prawdziwym Identity Provider (OAuth2 Authorization Code / JWT) zamiast mocka.
-- Szyfrowanie i podpis XML (XMLDSig / XMLEnc) oraz wymuszanie TLS mutual.
-- Trwała kolejka (RabbitMQ / Kafka) zamiast timers/in-memory, by obsłużyć retry i skalowanie.
-- Audyt i śledzenie stanu wiadomości w bazie danych (statusy, historyczne wydarzenia).
-- Symulacja potwierdzeń (ACK/NACK) oraz retry/backoff dla transient errors.
-- Wsparcie różnych schematów opłat i rozliczeń (np. ultimateCreditor, charges information fields).
-- Bogatsze walidacje ISO 20022 (schemat XSD validation) i mapowanie na pola CBPR+.
 
 ## Autorzy
 
