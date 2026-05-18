@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from app.services.parser import parse_xml
 from app.services.swift_service import handle_swift_message
+from app.services import inbox
 
 
 # TESTOWY KOMUNIKAT PACS.008 (ISO 20022 SWIFT CBPR+)
@@ -80,19 +81,14 @@ class SwiftFlowTestCase(unittest.TestCase):
     # routing + forwarding do banku docelowego
     @patch("app.services.swift_service.forward_message")
     def test_handle_swift_message_forwards_to_known_bank(self, forward_message_mock):
-
-        forward_message_mock.return_value = (202, '{"status": "accepted"}')
-
+      # For the updated design incoming messages are stored in inbox awaiting manual send
+      with patch("app.services.inbox.add_incoming") as inbox_add:
         result, status = handle_swift_message(SAMPLE_XML)
 
-        self.assertEqual(status, 200)
-        self.assertEqual(result["status"], "submitted")
-
+        self.assertEqual(status, 202)
+        self.assertEqual(result["status"], "accepted")
         self.assertEqual(result["receiver_bank"], "Bank UK 1")
-
-        self.assertEqual(result["forwarded_to"], "http://localhost:3003/receive")
-
-        forward_message_mock.assert_called_once()
+        inbox_add.assert_called_once()
 
     def test_handle_swift_message_rejects_unknown_receiver(self):
 

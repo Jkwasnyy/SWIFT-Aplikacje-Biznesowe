@@ -1,7 +1,10 @@
 from app.services.parser import parse_xml
-from app.services.router import get_bank_info, get_bank_url
+from app.services.router import get_bank_info
 from app.services.forwarder import forward_message
 from app.core.logger import log
+from app.services import scheduler
+from app.services import inbox
+from app.core.config import CANCEL_WINDOW_SECONDS
 
 
 def handle_swift_message(xml):
@@ -42,55 +45,19 @@ def handle_swift_message(xml):
             f"BANK={bank_info['name']}"
         )
 
-        # ===== FORWARDING STAGE =====
-        bank_url = get_bank_url(message.receiver_bic)
+        # ===== STORE IN INBOX (awaiting manual send) =====
+        inbox.add_incoming(message.uetr, message, xml)
+        log(f"[INBOX] Stored incoming {message.uetr}")
 
-        status, response_text = forward_message(
-            bank_url,
-            xml,
-            headers={
-                "X-SWIFT-UETR": message.uetr,
-                "X-SWIFT-Message-Id": message.message_id,
-                "X-SWIFT-Instruction-Id": message.instruction_id,
-                "X-SWIFT-Charge-Bearer": message.charge_bearer,
-                # --- DODAJ TE LINIE ---
-                "X-SWIFT-Currency": message.currency,
-                "X-SWIFT-Settlement-Date": message.settlement_date,
-                # ----------------------
-            },
-        )
-
-        log(
-            f"[FORWARDED] MSG={message.message_id} "
-            f"UETR={message.uetr} "
-            f"TO={bank_info['name']} "
-            f"URL={bank_url} "
-            f"STATUS={status}"
-        )
-
-        # ===== RESPONSE STAGE =====
-        if response_text:
-            log(
-                f"[BANK_RESPONSE] MSG={message.message_id} "
-                f"UETR={message.uetr} "
-                f"RESPONSE={response_text}"
-            )
-
-        # ===== FINAL =====
-        log(
-            f"[COMPLETED] MSG={message.message_id} "
-            f"UETR={message.uetr} "
-            f"STATUS=SUBMITTED"
-        )
-
+        # ===== RETURN ACCEPTED (but not yet scheduled) =====
         return {
-            "status": "submitted",
+            "status": "accepted",
             "message_id": message.message_id,
             "uetr": message.uetr,
-            "forwarded_to": bank_url,
             "receiver_bank": bank_info["name"],
-            "bank_response_status": status,
-        }, 200
+            "scheduled_in": None,
+            "cancel_window_seconds": CANCEL_WINDOW_SECONDS,
+        }, 202
 
     except Exception as e:
         log(f"[SYSTEM_ERROR] ERROR={str(e)}")

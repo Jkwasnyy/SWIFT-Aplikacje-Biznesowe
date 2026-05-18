@@ -1,0 +1,35 @@
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-1002</MsgId>
+      <CreDtTm>2026-05-18T12:01:00Z</CreDtTm>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>INST-1002</InstrId>
+        <UETR>22222222-2222-4222-8222-222222222222</UETR>
+      </PmtId>
+      <ChrgBr>SHAR</ChrgBr>
+      <Dbtr>
+        <Nm>Test Sender 2</Nm>
+      </Dbtr>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>PLBANK1XXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <Cdtr>
+        <Nm>Test Receiver 2</Nm>
+      </Cdtr>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>UKBANK2XXX</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+      <IntrBkSttlmAmt Ccy="PLN">20.00</IntrBkSttlmAmt>
+      <RmtInf>
+        <Ustrd>Test payment 2</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

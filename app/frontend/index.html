@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SWIFT Dashboard</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-badge">SW</div>
+          <div>
+            <h1>SWIFT Dashboard</h1>
+            <p>Mock routing & payment flow</p>
+          </div>
+        </div>
+
+        <div class="panel card">
+          <div class="panel-title">Akcje</div>
+          <button id="get-token" class="btn btn-primary">Get demo token</button>
+          <label class="file-upload">
+            <input type="file" id="xml-file" accept=".xml,application/xml" />
+            <span>Wgraj payment.xml</span>
+          </label>
+          <button id="send-msg" class="btn btn-dark">Wyślij przelew</button>
+          <button id="refresh-all" class="btn btn-ghost">
+            Odśwież dashboard
+          </button>
+          <div id="token-box" class="token-box"></div>
+          <div id="send-result" class="result-box"></div>
+        </div>
+
+        <div class="panel card stats-grid">
+          <div class="stat">
+            <span>Przychodzące</span>
+            <strong id="count-incoming">0</strong>
+          </div>
+          <div class="stat">
+            <span>Do zaakceptowania</span>
+            <strong id="count-pending">0</strong>
+          </div>
+          <div class="stat">
+            <span>Zakończone</span>
+            <strong id="count-completed">0</strong>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <section class="board">
+          <div class="board-column card">
+            <div class="column-head">
+              <div>
+                <h2>Przychodzące płatności</h2>
+                <p>Nowe wiadomości i routing</p>
+              </div>
+              <span class="badge badge-blue" id="count-incoming-badge">0</span>
+            </div>
+            <div id="incoming-list" class="card-list"></div>
+          </div>
+
+          <div class="board-column card">
+            <div class="column-head">
+              <div>
+                <h2>Do zaakceptowania</h2>
+                <p>Czekają w oknie anulowania</p>
+              </div>
+              <span class="badge badge-amber" id="count-pending-badge">0</span>
+            </div>
+            <div id="pending-list" class="card-list"></div>
+          </div>
+
+          <div class="board-column card">
+            <div class="column-head">
+              <div>
+                <h2>Zakończone</h2>
+                <p>Wysłane, anulowane lub błąd</p>
+              </div>
+              <span class="badge badge-green" id="count-completed-badge"
+                >0</span
+              >
+            </div>
+            <div class="status-filters" id="status-filters">
+              <button class="filter-pill is-active" data-filter="all">
+                Wszystkie
+              </button>
+              <button class="filter-pill filter-sent" data-filter="sent">
+                Wysłane
+              </button>
+              <button
+                class="filter-pill filter-cancelled"
+                data-filter="cancelled"
+              >
+                Cancelled
+              </button>
+              <button class="filter-pill filter-error" data-filter="error">
+                Błąd
+              </button>
+            </div>
+            <div id="completed-list" class="card-list"></div>
+          </div>
+        </section>
+
+        <section class="details-section card">
+          <div class="column-head">
+            <div>
+              <h2>Szczegóły transakcji</h2>
+              <p>Kliknij kartę po lewej, żeby zobaczyć pełny kontekst</p>
+            </div>
+            <span id="details-status-badge" class="badge badge-gray"
+              >Brak wyboru</span
+            >
+          </div>
+          <div id="details-panel" class="details-panel empty-state">
+            Wybierz transakcję, żeby zobaczyć szczegóły.
+          </div>
+        </section>
+
+        <section class="logs-section card">
+          <div class="column-head">
+            <div>
+              <h2>Ostatnie logi</h2>
+              <p>Podgląd działania backendu i mock-banków</p>
+            </div>
+            <button id="refresh-logs" class="btn btn-ghost">
+              Odśwież logi
+            </button>
+          </div>
+          <pre id="logs" class="logs"></pre>
+        </section>
+      </main>
+    </div>
+
+    <script src="/assets/app.js"></script>
+  </body>
+</html>

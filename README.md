@@ -35,17 +35,52 @@ Projekt symuluje działanie sieci SWIFT jako pośrednika między bankami. Bank w
 pip install -r requirements.txt
 ```
 
-### 2. Start serwera SWIFT
+### 2. Start projektu
+
+Najprościej uruchomić całość jednym plikiem:
+
+```powershell
+.\run.bat
+```
+
+To odpala mock-banki, backend i zapisuje PID-y do `scripts/pids.txt`.
+
+### 3. Zatrzymanie projektu
+
+```powershell
+.\stop.bat
+```
+
+### 4. Wejście do frontendu
+
+Po starcie otwórz w przeglądarce:
+
+```text
+http://localhost:3000/
+```
+
+W panelu możesz:
+
+- pobrać token demo,
+- wysłać `payment.xml`,
+- zobaczyć listę oczekujących przelewów,
+- podejrzeć ostatnie wpisy z `logs.txt`,
+- anulować przelew w oknie anulowania.
+
+### 5. Start ręczny (opcjonalnie)
+
+Jeśli chcesz uruchamiać wszystko osobno:
 
 ```
 python -m app.main
 ```
 
-### 3. Start mock banków
-
-```
+```powershell
 python mocks/mock_bank.py 3001
-...
+python mocks/mock_bank.py 3002
+python mocks/mock_bank.py 3003
+python mocks/mock_bank.py 3004
+python mocks/mock_bank.py 3005
 python mocks/mock_bank.py 3006
 ```
 
@@ -57,13 +92,13 @@ Docelowo symulujemy 6 banków:
 
 ## Test
 
-### PowerShell:
+Przykładowe wywołanie API z PowerShell:
 
-```
-Invoke-WebRequest -Uri http://localhost:3000/swift/message `
-  -Method POST `
-  -ContentType "application/xml" `
-  -InFile payment.xml
+```powershell
+$tokenResponse = Invoke-WebRequest -Uri http://localhost:3000/auth/token -Method POST -Body @{client_id='test-client'; client_secret='test-secret'} -UseBasicParsing
+$token = (ConvertFrom-Json $tokenResponse.Content).access_token
+
+Invoke-WebRequest -Uri http://localhost:3000/swift/message -Method POST -Headers @{ Authorization = "Bearer $token" } -ContentType "application/xml" -InFile payment.xml -UseBasicParsing
 ```
 
 ## Przykładowy komunikat
@@ -108,6 +143,25 @@ W tym symulatorze to pole ustawia bank wysyłający jeszcze przed wysłaniem wia
 - routing między bankami
 - forward wiadomości
 - logowanie operacji
+
+## Realistyczne rozszerzenia (dodane)
+
+- **OAuth2 (mock)**: prosty endpoint `/auth/token` umożliwia wydanie tokenu typu `Bearer` dla testowego klienta. Endpointy `/swift/message` i `/swift/cancel/<uetr>` wymagają tokenu.
+- **Routing wieloskokowy**: topologia sieci banków znajduje się w `app/core/config.py` i jest używana przez `app/services/router.py` do wyznaczania trasy (BFS) z banku A do banku B przez banki pośredniczące.
+- **Okno anulowania**: wiadomości są teraz planowane do wysłania z opóźnieniem (`FORWARD_DELAY_SECONDS` w `app/core/config.py`). W czasie opóźnienia można anulować przelew przez `POST /swift/cancel/<uetr>`.
+- **Konfiguracja**: ustawienia OAuth, sieci banków i polityki forwarding/cancel znajdują się w `app/core/config.py` dla łatwej edycji.
+
+Zmienione pliki: [app/core/config.py](app/core/config.py), [app/core/auth.py](app/core/auth.py), [app/services/scheduler.py](app/services/scheduler.py), [app/services/router.py](app/services/router.py), [app/api/routes.py](app/api/routes.py)
+
+## Co można jeszcze dodać, żeby było bliżej prawdziwego SWIFT-a
+
+- Integracja z prawdziwym Identity Provider (OAuth2 Authorization Code / JWT) zamiast mocka.
+- Szyfrowanie i podpis XML (XMLDSig / XMLEnc) oraz wymuszanie TLS mutual.
+- Trwała kolejka (RabbitMQ / Kafka) zamiast timers/in-memory, by obsłużyć retry i skalowanie.
+- Audyt i śledzenie stanu wiadomości w bazie danych (statusy, historyczne wydarzenia).
+- Symulacja potwierdzeń (ACK/NACK) oraz retry/backoff dla transient errors.
+- Wsparcie różnych schematów opłat i rozliczeń (np. ultimateCreditor, charges information fields).
+- Bogatsze walidacje ISO 20022 (schemat XSD validation) i mapowanie na pola CBPR+.
 
 ## Autorzy
 

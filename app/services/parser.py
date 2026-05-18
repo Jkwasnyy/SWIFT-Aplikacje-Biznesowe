@@ -20,16 +20,15 @@ def parse_xml(xml_string):
     amount_element = root.find(".//ns:InstdAmt", NS)
     intrbk_element = root.find(".//ns:IntrBkSttlmAmt", NS)
 
-    if amount_element is None or amount_element.text is None:
-        raise ValueError("Missing InstdAmt")
+    # Accept either InstdAmt (preferred) or IntrBkSttlmAmt as amount source
+    amount_source = amount_element if (amount_element is not None and amount_element.text) else intrbk_element
+    if amount_source is None or amount_source.text is None:
+        raise ValueError("Missing amount element (InstdAmt or IntrBkSttlmAmt)")
 
-    amount = amount_element.text.strip()
+    amount = amount_source.text.strip()
 
     # ✔ SAFE CURRENCY RESOLUTION (SWIFT STYLE PRIORITY)
-    currency = (
-        amount_element.get("Ccy")
-        or (intrbk_element.get("Ccy") if intrbk_element is not None else "")
-    )
+    currency = amount_source.get("Ccy") or ""
 
     # =========================
     # SENDER
