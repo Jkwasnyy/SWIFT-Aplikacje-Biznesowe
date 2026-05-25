@@ -59,7 +59,7 @@
         <FinInstnId>
 
           <!-- Kod BIC/SWIFT banku nadawcy -->
-          <BICFI>PLBANK1XXX</BICFI>
+          <BICFI>PLBKPL01XXX</BICFI>
 
         </FinInstnId>
       </InstgAgt>
@@ -69,7 +69,7 @@
         <FinInstnId>
 
           <!-- Kod BIC/SWIFT banku odbiorcy -->
-          <BICFI>UKBANK1XXX</BICFI>
+          <BICFI>UKBKGB01XXX</BICFI>
 
         </FinInstnId>
       </InstdAgt>
@@ -100,14 +100,14 @@
       <!-- Bank obsługujący nadawcę -->
       <DbtrAgt>
         <FinInstnId>
-          <BICFI>PLBANK1XXX</BICFI>
+          <BICFI>PLBKPL01XXX</BICFI>
         </FinInstnId>
       </DbtrAgt>
 
       <!-- Bank obsługujący odbiorcę -->
       <CdtrAgt>
         <FinInstnId>
-          <BICFI>UKBANK1XXX</BICFI>
+          <BICFI>UKBKGB01XXX</BICFI>
         </FinInstnId>
       </CdtrAgt>
 

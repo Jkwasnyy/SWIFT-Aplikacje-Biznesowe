@@ -5,17 +5,34 @@ _lock = Lock()
 _inbox = {}
 
 
-def add_incoming(uetr, message_obj, xml):
+def add_incoming(uetr, message_obj, xml, **metadata):
     with _lock:
         _inbox[uetr] = {
             "message": message_obj,
             "xml": xml,
+            **metadata,
         }
 
 
 def list_incoming():
     with _lock:
-        return [{"uetr": k, "message_id": v["message"].message_id if hasattr(v["message"], 'message_id') else "", "sender": getattr(v["message"], 'sender', '')} for k, v in _inbox.items()]
+        result = []
+        for uetr, entry in _inbox.items():
+            message = entry["message"]
+            result.append(
+                {
+                    "uetr": uetr,
+                    "message_id": getattr(message, "message_id", ""),
+                    "sender": getattr(message, "sender_bic", ""),
+                    "receiver": getattr(message, "receiver_bic", ""),
+                    "amount": getattr(message, "amount", ""),
+                    "currency": getattr(message, "currency", ""),
+                    "route": entry.get("route", []),
+                    "fee_breakdown": entry.get("fee_breakdown", {}),
+                    "estimated_seconds": entry.get("estimated_seconds", 0.0),
+                }
+            )
+        return result
 
 
 def get_incoming(uetr):

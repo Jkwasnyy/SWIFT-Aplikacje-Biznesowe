@@ -7,6 +7,9 @@ Projekt symuluje działanie sieci SWIFT jako pośrednika między bankami. Bank w
 - waliduje komunikat,
 - odczytuje dane płatności,
 - sprawdza bank odbiorcy po BIC,
+- sprawdza konto odbiorcy i odrzuca zamknięte / nieistniejące rachunki,
+- wyznacza najkrótszą czasowo trasę przez banki korespondentów,
+- liczy i pokazuje podział opłat zależny od `ChrgBr`,
 - przekazuje wiadomość do odpowiedniego mock-banku,
 - zapisuje przebieg operacji w logach.
 
@@ -63,9 +66,18 @@ W panelu możesz:
 
 - pobrać token demo,
 - wysłać `payment.xml`,
+- otworzyć Swagger UI pod `http://localhost:3000/docs`,
 - zobaczyć listę oczekujących przelewów,
+- podejrzeć trasę, ETA i podział opłat,
 - podejrzeć ostatnie wpisy z `logs.txt`,
 - anulować przelew w oknie anulowania.
+
+Pliki scenariuszy testowych znajdziesz w `mocks/test_payments/`:
+
+- `payment1.xml` - poprawny przelew z bezpośrednią trasą
+- `payment2.xml` - poprawny przelew z trasą wieloskokową i innym `ChrgBr`
+- `payment3.xml` - przelew na zamknięte konto
+- `payment4.xml` - przelew na nieistniejące konto
 
 ### 5. Start ręczny (opcjonalnie)
 
@@ -84,11 +96,11 @@ python mocks/mock_bank.py 3005
 python mocks/mock_bank.py 3006
 ```
 
-Docelowo symulujemy 6 banków:
+Docelowo symulujemy 6 banków (BIC-like IDs):
 
-- Polska: `PLBANK1XXX`, `PLBANK2XXX`
-- Wielka Brytania: `UKBANK1XXX`, `UKBANK2XXX`
-- USA: `USBANK1XXX`, `USBANK2XXX`
+- Polska: `PLBKPL01XXX`, `PLBKPL02XXX`
+- Wielka Brytania: `UKBKGB01XXX`, `UKBKGB02XXX`
+- USA: `USBKUS01XXX`, `USBKUS02XXX`
 
 ## Test
 
@@ -147,7 +159,9 @@ W tym symulatorze to pole ustawia bank wysyłający jeszcze przed wysłaniem wia
 ## Realistyczne rozszerzenia
 
 - **OAuth2 (mock)**: prosty endpoint `/auth/token` umożliwia wydanie tokenu typu `Bearer` dla testowego klienta. Endpointy `/swift/message` i `/swift/cancel/<uetr>` wymagają tokenu.
-- **Routing wieloskokowy**: topologia sieci banków znajduje się w `app/core/config.py` i jest używana przez `app/services/router.py` do wyznaczania trasy (BFS) z banku A do banku B przez banki pośredniczące.
+- **Routing wieloskokowy**: topologia sieci banków znajduje się w `app/core/config.py` i jest używana przez `app/services/router.py` do wyznaczania najszybszej trasy przez banki pośredniczące.
+- **Podział opłat**: `app/services/settlement.py` oblicza opłatę całkowitą i rozbija ją zgodnie z `ChrgBr`.
+- **Walidacja rachunków**: system sprawdza, czy rachunek odbiorcy istnieje i ma status `open`; zamknięte lub brakujące konto kończy się błędem.
 - **Okno anulowania**: wiadomości są teraz planowane do wysłania z opóźnieniem (`FORWARD_DELAY_SECONDS` w `app/core/config.py`). W czasie opóźnienia można anulować przelew przez `POST /swift/cancel/<uetr>`.
 - **Konfiguracja**: ustawienia OAuth, sieci banków i polityki forwarding/cancel znajdują się w `app/core/config.py` dla łatwej edycji.
 

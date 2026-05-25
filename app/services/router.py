@@ -15,38 +15,48 @@ def get_bank_info(receiver_bic):
 # Routing with intermediaries
 # ----------
 from app.core.config import NETWORK
+from app.core.config import NETWORK_LATENCY_SECONDS
+
+
+def estimate_route_seconds(route):
+    if not route or len(route) < 2:
+        return 0.0
+
+    total = 0.0
+    for left_bic, right_bic in zip(route, route[1:]):
+        total += NETWORK_LATENCY_SECONDS.get(left_bic, {}).get(right_bic, 1.0)
+    return round(total, 2)
 
 
 def get_route(sender_bic, receiver_bic):
-    """Return a list of BICs representing a route from sender to receiver.
+    """Return the fastest route between sender and receiver.
 
-    If direct connection exists, returns [sender, receiver]. If no route,
-    returns empty list.
+    The path is selected using weighted shortest-path search so the simulator
+    prefers the route with the lowest expected settlement time, not just the
+    route with the fewest hops.
     """
     if sender_bic == receiver_bic:
         return [sender_bic]
 
-    # direct
-    neighbors = NETWORK.get(sender_bic, [])
-    if receiver_bic in neighbors:
-        return [sender_bic, receiver_bic]
+    import heapq
 
-    # BFS
-    from collections import deque
-
-    queue = deque()
-    queue.append((sender_bic, [sender_bic]))
-    seen = {sender_bic}
+    queue = [(0.0, sender_bic, [sender_bic])]
+    best_costs = {sender_bic: 0.0}
 
     while queue:
-        current, path = queue.popleft()
-        for nb in NETWORK.get(current, []):
-            if nb in seen:
+        current_cost, current_bic, path = heapq.heappop(queue)
+        if current_bic == receiver_bic:
+            return path
+
+        if current_cost > best_costs.get(current_bic, float("inf")):
+            continue
+
+        for neighbor in NETWORK.get(current_bic, []):
+            edge_cost = NETWORK_LATENCY_SECONDS.get(current_bic, {}).get(neighbor, 1.0)
+            new_cost = current_cost + edge_cost
+            if new_cost >= best_costs.get(neighbor, float("inf")):
                 continue
-            new_path = path + [nb]
-            if nb == receiver_bic:
-                return new_path
-            seen.add(nb)
-            queue.append((nb, new_path))
+            best_costs[neighbor] = new_cost
+            heapq.heappush(queue, (new_cost, neighbor, path + [neighbor]))
 
     return []

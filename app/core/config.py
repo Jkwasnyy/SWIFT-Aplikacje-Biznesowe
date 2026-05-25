@@ -1,10 +1,11 @@
 BANK_METADATA = {
-    "PLBANK1XXX": {"name": "Bank Polska 1", "country": "PL", "url": "http://localhost:3001/receive"},
-    "PLBANK2XXX": {"name": "Bank Polska 2", "country": "PL", "url": "http://localhost:3002/receive"},
-    "UKBANK1XXX": {"name": "Bank UK 1", "country": "UK", "url": "http://localhost:3003/receive"},
-    "UKBANK2XXX": {"name": "Bank UK 2", "country": "UK", "url": "http://localhost:3004/receive"},
-    "USBANK1XXX": {"name": "Bank USA 1", "country": "US", "url": "http://localhost:3005/receive"},
-    "USBANK2XXX": {"name": "Bank USA 2", "country": "US", "url": "http://localhost:3006/receive"},
+    # BIC-like identifiers (4 char bank code + 2 char country + 2 char location + optional branch)
+    "PLBKPL01XXX": {"name": "Bank Polska 1", "country": "PL", "url": "http://localhost:3001/receive"},
+    "PLBKPL02XXX": {"name": "Bank Polska 2", "country": "PL", "url": "http://localhost:3002/receive"},
+    "UKBKGB01XXX": {"name": "Bank UK 1", "country": "GB", "url": "http://localhost:3003/receive"},
+    "UKBKGB02XXX": {"name": "Bank UK 2", "country": "GB", "url": "http://localhost:3004/receive"},
+    "USBKUS01XXX": {"name": "Bank USA 1", "country": "US", "url": "http://localhost:3005/receive"},
+    "USBKUS02XXX": {"name": "Bank USA 2", "country": "US", "url": "http://localhost:3006/receive"},
 }
 
 BANKS = {bic: data["url"] for bic, data in BANK_METADATA.items()}
@@ -14,19 +15,67 @@ def get_bank_metadata(bic):
     return BANK_METADATA.get(bic)
 
 
+# Known accounts used by the simulator. Closed and missing accounts are used
+# to exercise error handling in the transfer flow.
+ACCOUNT_DIRECTORY = {
+    "PLBKPL01XXX": {
+        "PL61109010140000071219812874": "open",
+    },
+    "PLBKPL02XXX": {
+        "PL62109010140000071219812875": "open",
+        "PL00000000000000000000000000": "closed",
+    },
+    "UKBKGB01XXX": {
+        "GB29NWBK60161331926819": "open",
+        "GB00CLOSED0000000000000000": "closed",
+    },
+    "UKBKGB02XXX": {
+        "GB29NWBK60161331926820": "open",
+    },
+    "USBKUS01XXX": {
+        "US123456789012345678901234": "open",
+    },
+    "USBKUS02XXX": {
+        "US223456789012345678901234": "open",
+    },
+}
+
+
+def get_account_status(bic, account_number):
+    accounts = ACCOUNT_DIRECTORY.get(bic, {})
+    return accounts.get(account_number)
+
+
 # -----------------------------
 # Network topology and OAuth2
 # -----------------------------
 # Adjacency list of bank connectivity. Use this to compute multi-hop routes
 # between banks when no direct connection exists.
 NETWORK = {
-    # PLBANK1 connects directly to PLBANK2 and UKBANK1
-    "PLBANK1XXX": ["PLBANK2XXX", "UKBANK1XXX"],
-    "PLBANK2XXX": ["PLBANK1XXX", "USBANK1XXX"],
-    "UKBANK1XXX": ["UKBANK2XXX", "PLBANK1XXX"],
-    "UKBANK2XXX": ["UKBANK1XXX", "USBANK2XXX"],
-    "USBANK1XXX": ["PLBANK2XXX", "USBANK2XXX"],
-    "USBANK2XXX": ["USBANK1XXX", "UKBANK2XXX"],
+    # PLBKPL01XXX connects to PLBKPL02XXX and UKBKGB01XXX
+    "PLBKPL01XXX": ["PLBKPL02XXX", "UKBKGB01XXX"],
+    "PLBKPL02XXX": ["PLBKPL01XXX", "USBKUS01XXX"],
+    "UKBKGB01XXX": ["UKBKGB02XXX", "PLBKPL01XXX"],
+    "UKBKGB02XXX": ["UKBKGB01XXX", "USBKUS02XXX"],
+    "USBKUS01XXX": ["PLBKPL02XXX", "USBKUS02XXX"],
+    "USBKUS02XXX": ["USBKUS01XXX", "UKBKGB02XXX"],
+}
+
+# Weighted latency graph used by route selection. Lower cost means a faster
+# expected payment path, even if it uses more intermediaries.
+NETWORK_LATENCY_SECONDS = {
+    "PLBKPL01XXX": {"PLBKPL02XXX": 5.0, "UKBKGB01XXX": 1.0},
+    "PLBKPL02XXX": {"PLBKPL01XXX": 5.0, "USBKUS01XXX": 5.0},
+    "UKBKGB01XXX": {"UKBKGB02XXX": 1.0, "PLBKPL01XXX": 1.0},
+    "UKBKGB02XXX": {"UKBKGB01XXX": 1.0, "USBKUS02XXX": 1.0},
+    "USBKUS01XXX": {"PLBKPL02XXX": 5.0, "USBKUS02XXX": 1.0},
+    "USBKUS02XXX": {"USBKUS01XXX": 1.0, "UKBKGB02XXX": 1.0},
+}
+
+
+PAYMENT_FEES = {
+    "base_fee": 0.50,
+    "per_hop_fee": 0.25,
 }
 
 
@@ -42,3 +91,6 @@ OAUTH = {
 # Forwarding / cancellation policy
 FORWARD_DELAY_SECONDS = 5  # seconds to wait before forwarding (cancel window)
 CANCEL_WINDOW_SECONDS = FORWARD_DELAY_SECONDS  # same period allowed for cancel
+
+# Bank callback endpoint used by mock banks to confirm receipt of a transfer.
+BANK_ACK_CALLBACK_URL = "http://localhost:3000/api/bank/ack"

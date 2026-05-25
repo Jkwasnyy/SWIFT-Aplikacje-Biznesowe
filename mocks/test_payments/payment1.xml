@@ -1,21 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
   <FIToFICstmrCdtTrf>
     <GrpHdr>
       <MsgId>MSG-1001</MsgId>
       <CreDtTm>2026-05-18T12:00:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>INDA</SttlmMtd>
+      </SttlmInf>
     </GrpHdr>
     <CdtTrfTxInf>
       <PmtId>
         <InstrId>INST-1001</InstrId>
+        <EndToEndId>NOTPROVIDED</EndToEndId>
         <UETR>11111111-1111-4111-8111-111111111111</UETR>
       </PmtId>
+      <IntrBkSttlmAmt Ccy="PLN">10.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
+      <InstdAmt Ccy="PLN">10.00</InstdAmt>
       <ChrgBr>SHAR</ChrgBr>
       <Dbtr>
         <Nm>Test Sender 1</Nm>
       </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>PL61109010140000071219812874</IBAN>
+        </Id>
+      </DbtrAcct>
       <DbtrAgt>
         <FinInstnId>
-          <BICFI>PLBANK1XXX</BICFI>
+          <BICFI>PLBKPL01XXX</BICFI>
         </FinInstnId>
       </DbtrAgt>
       <Cdtr>
@@ -23,10 +37,16 @@
       </Cdtr>
       <CdtrAgt>
         <FinInstnId>
-          <BICFI>UKBANK1XXX</BICFI>
+          <BICFI>UKBKGB01XXX</BICFI>
         </FinInstnId>
       </CdtrAgt>
-      <IntrBkSttlmAmt Ccy="PLN">10.00</IntrBkSttlmAmt>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>GB29NWBK60161331926819</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
       <RmtInf>
         <Ustrd>Test payment 1</Ustrd>
       </RmtInf>

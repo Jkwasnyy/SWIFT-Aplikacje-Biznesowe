@@ -20,6 +20,7 @@ function statusLabel(status) {
   const map = {
     received: ["Otrzymane", "badge-blue"],
     queued: ["W kolejce", "badge-amber"],
+    completed: ["Zakończone", "badge-green"],
     sent: ["Wysłane", "badge-green"],
     cancelled: ["Anulowane", "badge-red"],
     error: ["Błąd", "badge-red"],
@@ -35,19 +36,26 @@ function prettyLabel(value) {
 
 function renderCard(item, actionHtml = "", extraAttrs = "") {
   const [label, badgeClass] = statusLabel(item.status);
+  const routeText = (item.route || []).join(" → ") || "-";
+  const feeText = item.fee_total ? `Opłata ${item.fee_total}` : "Opłata -";
+  const etaText = item.eta_seconds ? `ETA ${item.eta_seconds}s` : "ETA -";
   return `
     <article class="tx-card" data-uetr="${escapeHtml(item.uetr || "")}" ${extraAttrs}>
       <div class="tx-head">
         <div>
           <div class="tx-title">${escapeHtml(item.message_id || item.uetr)}</div>
               <div class="tx-subtitle">${escapeHtml(item.sender || "-")} → ${escapeHtml(item.receiver || item.bank || "-")}</div>
-              <div class="tx-subtitle" style="font-size:0.78rem;color:var(--muted);">Trasa: ${escapeHtml((item.route || []).join(" → ") || "-")}</div>
+              <div class="tx-subtitle" style="font-size:0.78rem;color:var(--muted);">Trasa: ${escapeHtml(routeText)}</div>
         </div>
         <span class="badge ${badgeClass}">${escapeHtml(label)}</span>
       </div>
       <div class="tx-meta">
         <span>${escapeHtml(item.amount || "-")} ${escapeHtml(item.currency || "")}</span>
         <span>${escapeHtml(item.uetr || "")}</span>
+      </div>
+      <div class="tx-meta">
+        <span>${escapeHtml(feeText)}</span>
+        <span>${escapeHtml(etaText)}</span>
       </div>
       <div class="tx-footer">
         <span>${escapeHtml(item.details || item.timestamp || "")}</span>
@@ -77,9 +85,12 @@ function renderDetails(item) {
       <div><span>Nadawca</span><strong>${escapeHtml(item.sender || "-")}</strong></div>
       <div><span>Odbiorca / bank</span><strong>${escapeHtml(item.receiver || item.bank || "-")}</strong></div>
       <div><span>Kwota</span><strong>${escapeHtml(item.amount || "-")} ${escapeHtml(item.currency || "")}</strong></div>
-      <div><span>Status</span><strong>${escapeHtml(prettyLabel(item.status))}</strong></div>
+      <div><span>Status</span><strong>${escapeHtml(label)}</strong></div>
       <div><span>Czas</span><strong>${escapeHtml(item.timestamp || "-")}</strong></div>
       <div><span>Szczegóły</span><strong>${escapeHtml(item.details || "-")}</strong></div>
+      <div><span>Opłata</span><strong>${escapeHtml(item.fee_total || "-")}</strong></div>
+      <div><span>Podział opłat</span><strong>${escapeHtml(item.fee_split || "-")}</strong></div>
+      <div><span>Szacowany czas</span><strong>${escapeHtml(item.eta_seconds || "-")}</strong></div>
       <div style="grid-column: 1 / -1"><span>Trasa</span><strong>${escapeHtml((item.route || []).join(" → ") || "-")}</strong></div>
     </div>
   `;

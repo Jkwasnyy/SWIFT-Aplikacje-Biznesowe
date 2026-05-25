@@ -120,9 +120,15 @@ body {
 }
 
 .btn {
+  display: block;
   width: 100%;
   padding: 13px 14px;
   margin-top: 10px;
+}
+
+.btn-link {
+  text-decoration: none;
+  text-align: center;
 }
 
 .btn-primary {

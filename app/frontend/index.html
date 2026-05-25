@@ -28,6 +28,14 @@
           <button id="refresh-all" class="btn btn-ghost">
             Odśwież dashboard
           </button>
+          <a
+            class="btn btn-ghost btn-link"
+            href="/docs"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Swagger UI
+          </a>
           <div id="token-box" class="token-box"></div>
           <div id="send-result" class="result-box"></div>
         </div>
@@ -76,7 +84,7 @@
             <div class="column-head">
               <div>
                 <h2>Zakończone</h2>
-                <p>Wysłane, anulowane lub błąd</p>
+                <p>Wysłane, potwierdzone przez bank, anulowane lub błąd</p>
               </div>
               <span class="badge badge-green" id="count-completed-badge"
                 >0</span
@@ -86,8 +94,8 @@
               <button class="filter-pill is-active" data-filter="all">
                 Wszystkie
               </button>
-              <button class="filter-pill filter-sent" data-filter="sent">
-                Wysłane
+              <button class="filter-pill filter-sent" data-filter="completed">
+                Zakończone
               </button>
               <button
                 class="filter-pill filter-cancelled"

@@ -2,8 +2,8 @@
 <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
   <FIToFICstmrCdtTrf>
     <GrpHdr>
-      <MsgId>MSG-1002</MsgId>
-      <CreDtTm>2026-05-18T12:01:00Z</CreDtTm>
+      <MsgId>MSG-1004</MsgId>
+      <CreDtTm>2026-05-18T12:03:00Z</CreDtTm>
       <NbOfTxs>1</NbOfTxs>
       <SttlmInf>
         <SttlmMtd>INDA</SttlmMtd>
@@ -11,16 +11,16 @@
     </GrpHdr>
     <CdtTrfTxInf>
       <PmtId>
-        <InstrId>INST-1002</InstrId>
+        <InstrId>INST-1004</InstrId>
         <EndToEndId>NOTPROVIDED</EndToEndId>
-        <UETR>22222222-2222-4222-8222-222222222222</UETR>
+        <UETR>44444444-4444-4444-8444-444444444444</UETR>
       </PmtId>
-      <IntrBkSttlmAmt Ccy="PLN">20.00</IntrBkSttlmAmt>
+      <IntrBkSttlmAmt Ccy="PLN">40.00</IntrBkSttlmAmt>
       <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
-      <InstdAmt Ccy="PLN">20.00</InstdAmt>
-      <ChrgBr>CRED</ChrgBr>
+      <InstdAmt Ccy="PLN">40.00</InstdAmt>
+      <ChrgBr>SHAR</ChrgBr>
       <Dbtr>
-        <Nm>Test Sender 2</Nm>
+        <Nm>Test Sender 4</Nm>
       </Dbtr>
       <DbtrAcct>
         <Id>
@@ -33,22 +33,22 @@
         </FinInstnId>
       </DbtrAgt>
       <Cdtr>
-        <Nm>Test Receiver 2</Nm>
+        <Nm>Test Receiver 4</Nm>
       </Cdtr>
       <CdtrAgt>
         <FinInstnId>
-          <BICFI>USBKUS01XXX</BICFI>
+          <BICFI>UKBKGB02XXX</BICFI>
         </FinInstnId>
       </CdtrAgt>
       <CdtrAcct>
         <Id>
           <Othr>
-            <Id>US123456789012345678901234</Id>
+            <Id>GB99NOTEXIST0000000000001</Id>
           </Othr>
         </Id>
       </CdtrAcct>
       <RmtInf>
-        <Ustrd>Test payment 2</Ustrd>
+        <Ustrd>Test payment 4</Ustrd>
       </RmtInf>
     </CdtTrfTxInf>
   </FIToFICstmrCdtTrf>
