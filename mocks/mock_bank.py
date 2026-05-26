@@ -1,5 +1,6 @@
 from flask import Flask, request
 import sys
+import os
 from datetime import datetime
 import requests
 
@@ -89,4 +90,5 @@ def receive():
 
 if __name__ == "__main__":
     PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 3001
-    app.run(port=PORT)
+    bind_host = os.getenv("MOCK_BIND_HOST", "0.0.0.0")
+    app.run(host=bind_host, port=PORT)

@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  swift-app:
+    build: .
+    container_name: swift-app
+    environment:
+      BANK_HOST: mock-banks
+      APP_HOST: swift-app
+      APP_BIND_HOST: 0.0.0.0
+      APP_PORT: 3000
+      FLASK_DEBUG: "0"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mock-banks
+    restart: unless-stopped
+
+  mock-banks:
+    build: .
+    container_name: mock-banks
+    command: ["sh", "/app/scripts/start_mock_banks.sh"]
+    environment:
+      MOCK_BIND_HOST: 0.0.0.0
+    restart: unless-stopped

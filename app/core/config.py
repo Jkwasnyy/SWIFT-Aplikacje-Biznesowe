@@ -1,11 +1,21 @@
+import os
+
+
+# Hostname used by app when forwarding to mock banks. For local runs keep
+# localhost; in Docker Compose this can point to another service.
+BANK_HOST = os.getenv("BANK_HOST", "localhost")
+
+# Hostname used by mock banks when sending callbacks to the main app.
+APP_HOST = os.getenv("APP_HOST", "localhost")
+
 BANK_METADATA = {
     # BIC-like identifiers (4 char bank code + 2 char country + 2 char location + optional branch)
-    "PLBKPL01XXX": {"name": "Bank Polska 1", "country": "PL", "url": "http://localhost:3001/receive"},
-    "PLBKPL02XXX": {"name": "Bank Polska 2", "country": "PL", "url": "http://localhost:3002/receive"},
-    "UKBKGB01XXX": {"name": "Bank UK 1", "country": "GB", "url": "http://localhost:3003/receive"},
-    "UKBKGB02XXX": {"name": "Bank UK 2", "country": "GB", "url": "http://localhost:3004/receive"},
-    "USBKUS01XXX": {"name": "Bank USA 1", "country": "US", "url": "http://localhost:3005/receive"},
-    "USBKUS02XXX": {"name": "Bank USA 2", "country": "US", "url": "http://localhost:3006/receive"},
+    "PLBKPL01XXX": {"name": "Bank Polska 1", "country": "PL", "url": f"http://{BANK_HOST}:3001/receive"},
+    "PLBKPL02XXX": {"name": "Bank Polska 2", "country": "PL", "url": f"http://{BANK_HOST}:3002/receive"},
+    "UKBKGB01XXX": {"name": "Bank UK 1", "country": "GB", "url": f"http://{BANK_HOST}:3003/receive"},
+    "UKBKGB02XXX": {"name": "Bank UK 2", "country": "GB", "url": f"http://{BANK_HOST}:3004/receive"},
+    "USBKUS01XXX": {"name": "Bank USA 1", "country": "US", "url": f"http://{BANK_HOST}:3005/receive"},
+    "USBKUS02XXX": {"name": "Bank USA 2", "country": "US", "url": f"http://{BANK_HOST}:3006/receive"},
 }
 
 BANKS = {bic: data["url"] for bic, data in BANK_METADATA.items()}
@@ -93,4 +103,4 @@ FORWARD_DELAY_SECONDS = 5  # seconds to wait before forwarding (cancel window)
 CANCEL_WINDOW_SECONDS = FORWARD_DELAY_SECONDS  # same period allowed for cancel
 
 # Bank callback endpoint used by mock banks to confirm receipt of a transfer.
-BANK_ACK_CALLBACK_URL = "http://localhost:3000/api/bank/ack"
+BANK_ACK_CALLBACK_URL = f"http://{APP_HOST}:3000/api/bank/ack"

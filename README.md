@@ -62,6 +62,45 @@ Po starcie otwórz w przeglądarce:
 http://localhost:3000/
 ```
 
+## Uruchomienie w Dockerze (np. na uczelni)
+
+Jeśli na danym komputerze jest już zainstalowany Docker Desktop (lub Docker Engine + Compose), możesz uruchomić cały projekt bez lokalnego Pythona i bez ręcznego odpalania wielu procesów.
+
+### 1. Zbuduj i uruchom kontenery
+
+```powershell
+docker compose up --build -d
+```
+
+To uruchamia:
+
+- `swift-app` (backend + frontend pod portem `3000`),
+- `mock-banks` (wszystkie 6 mock-banków wewnątrz sieci Dockera).
+
+### 2. Otwórz aplikację
+
+```text
+http://localhost:3000/
+```
+
+### 3. Podejrzyj logi
+
+```powershell
+docker compose logs -f
+```
+
+### 4. Zatrzymaj kontenery
+
+```powershell
+docker compose down
+```
+
+Jeśli chcesz dodatkowo usunąć zbudowane obrazy po zakończeniu pracy:
+
+```powershell
+docker compose down --rmi local
+```
+
 W panelu możesz:
 
 - pobrać token demo,
