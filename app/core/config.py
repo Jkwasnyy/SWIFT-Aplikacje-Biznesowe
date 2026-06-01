@@ -88,6 +88,12 @@ PAYMENT_FEES = {
     "per_hop_fee": 0.25,
 }
 
+# Flat percentage fee applied to the payment amount (e.g. 0.05 == 5%)
+PAYMENT_FEE_PERCENT = 0.05
+
+# Minimum estimated route time in seconds used for UI/cancellation windows
+DEFAULT_ESTIMATED_SECONDS = 10.0
+
 
 # Mock OAuth2 configuration (student project). In a real deployment these
 # values would be stored securely and OAuth flows handled by an identity
@@ -95,6 +101,12 @@ PAYMENT_FEES = {
 OAUTH = {
     "token_ttl_seconds": 3600,
     "clients": {"test-client": "test-secret"},
+}
+
+# Which banks each client is allowed to act for in this mock environment.
+# By default the demo client can act for all mock banks.
+CLIENT_BANKS = {
+    "test-client": list(BANK_METADATA.keys()),
 }
 
 

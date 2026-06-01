@@ -15,17 +15,21 @@ def get_bank_info(receiver_bic):
 # Routing with intermediaries
 # ----------
 from app.core.config import NETWORK
-from app.core.config import NETWORK_LATENCY_SECONDS
+from app.core.config import NETWORK_LATENCY_SECONDS, DEFAULT_ESTIMATED_SECONDS
 
 
 def estimate_route_seconds(route):
+    # If no real route (same bank) return 0
     if not route or len(route) < 2:
         return 0.0
 
     total = 0.0
     for left_bic, right_bic in zip(route, route[1:]):
         total += NETWORK_LATENCY_SECONDS.get(left_bic, {}).get(right_bic, 1.0)
-    return round(total, 2)
+
+    # Ensure the estimated time is at least the default configured seconds
+    estimated = max(total, DEFAULT_ESTIMATED_SECONDS)
+    return round(estimated, 2)
 
 
 def get_route(sender_bic, receiver_bic):

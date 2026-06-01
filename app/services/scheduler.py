@@ -59,6 +59,13 @@ def schedule_forward(message, xml, metadata=None):
                     "X-SWIFT-Sender-Account": message.sender_account,
                     "X-SWIFT-Receiver-Account": message.receiver_account,
                 }
+                # include fee breakdown headers when forwarding
+                fee = entry.get("fee_breakdown", {})
+                if fee:
+                    headers["X-SWIFT-Fee-Total"] = fee.get("total_fee", "0.00")
+                    headers["X-SWIFT-Fee-Sender"] = fee.get("sender_fee", "0.00")
+                    headers["X-SWIFT-Fee-Receiver"] = fee.get("receiver_fee", "0.00")
+                    headers["X-SWIFT-Fee-Intermediary"] = fee.get("intermediary_fee", "0.00")
                 if callback_url:
                     headers["X-SWIFT-Callback-Url"] = callback_url
                 status, resp = forward_message(
@@ -73,6 +80,22 @@ def schedule_forward(message, xml, metadata=None):
                         f"[SETTLEMENT_FAILED] MSG={message.message_id} UETR={uetr} "
                         f"HOP={hop_bic} STATUS={status} REASON={resp}"
                     )
+                    # If the bank rejected due to account problems, notify the sender bank
+                    reason_text = str(resp).lower()
+                    if "receiver_account_closed" in reason_text or "receiver_account" in reason_text or "missing_settlement_amount" in reason_text:
+                        try:
+                            sender_bic = route[0]
+                            sender_meta = get_bank_metadata(sender_bic)
+                            if sender_meta and sender_meta.get("url"):
+                                fail_xml = (
+                                    f"<FIToFICstmrCdtTrf><UETR>{uetr}</UETR>"
+                                    f"<RejectionReason>{resp}</RejectionReason>"
+                                    f"</FIToFICstmrCdtTrf>"
+                                )
+                                forward_message(sender_meta["url"], fail_xml, headers={"X-SWIFT-UETR": uetr, "X-SWIFT-Message-Id": message.message_id})
+                                log(f"[NOTIFY_SENDER] Notified sender {sender_bic} about failure {uetr}")
+                        except Exception as e:
+                            log(f"[NOTIFY_SENDER_ERROR] {e}")
                     break
 
             if last_response and 200 <= last_response[0] < 300:

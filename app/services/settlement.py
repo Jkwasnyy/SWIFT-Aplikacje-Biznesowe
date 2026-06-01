@@ -1,15 +1,22 @@
 from decimal import Decimal, ROUND_HALF_UP
 
-from app.core.config import PAYMENT_FEES, get_account_status
+from app.core.config import PAYMENT_FEES, get_account_status, PAYMENT_FEE_PERCENT
 
 
 def _money(value):
     return Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
-def calculate_fee_breakdown(charge_bearer, route):
-    hop_count = max(len(route) - 1, 1)
-    total_fee = _money(PAYMENT_FEES["base_fee"] + PAYMENT_FEES["per_hop_fee"] * hop_count)
+def calculate_fee_breakdown(charge_bearer, route, amount):
+    """Calculate fees as a percentage of the payment `amount`.
+
+    Returns amounts as strings formatted to two decimals (same shape as before).
+    """
+    # Ensure Decimal amount
+    amt = Decimal(str(amount))
+
+    # total fee is a flat percentage of the payment amount
+    total_fee = _money(amt * Decimal(str(PAYMENT_FEE_PERCENT)))
 
     charge_bearer = (charge_bearer or "SHAR").upper()
     if charge_bearer == "DEBT":
@@ -26,6 +33,8 @@ def calculate_fee_breakdown(charge_bearer, route):
         receiver_fee = total_fee - sender_fee
 
     intermediary_fee = total_fee - sender_fee - receiver_fee
+    hop_count = max(len(route) - 1, 1)
+
     return {
         "charge_bearer": charge_bearer,
         "total_fee": f"{total_fee:.2f}",

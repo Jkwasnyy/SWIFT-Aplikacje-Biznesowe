@@ -204,6 +204,54 @@ W tym symulatorze to pole ustawia bank wysyłający jeszcze przed wysłaniem wia
 - **Okno anulowania**: wiadomości są teraz planowane do wysłania z opóźnieniem (`FORWARD_DELAY_SECONDS` w `app/core/config.py`). W czasie opóźnienia można anulować przelew przez `POST /swift/cancel/<uetr>`.
 - **Konfiguracja**: ustawienia OAuth, sieci banków i polityki forwarding/cancel znajdują się w `app/core/config.py` dla łatwej edycji.
 
+## Bank integration (jak się podłączyć)
+
+Poniżej krótkie instrukcje dla zespołów bankowych, które chcą integrować się z tym symulatorem.
+
+- Auth: zdobądź token POST `/auth/token` (grant `client_credentials`), body: `client_id` + `client_secret` lub Basic Auth. Odpowiedź zawiera `access_token` i pole `banks` z listą BIC-ów, w imieniu których klient może działać.
+
+- Wysyłanie przelewu (endpoint aplikacji):
+  - URL: `POST /swift/message`
+  - Nagłówki wymagane:
+    - `Authorization: Bearer <token>`
+    - `Content-Type: application/xml`
+    - opcjonalne: `X-SWIFT-Callback-Url` (jeśli bank oczekuje callbacku od nas)
+  - Body: XML w formacie zgodnym z przykładowym `payment.xml` (z polami `InstdAmt`, `UETR`, `DbtrAgt`, `CdtrAgt`, `ChrgBr` itp.)
+  - Odpowiedzi:
+    - `202 Accepted` — przyjęto do przetworzenia (zwracamy `uetr`, `fee_breakdown`, `cancel_window_seconds`)
+    - `4xx` — błąd walidacji (np. `400`, `403`, `404`, `422`)
+
+- Przykład (curl):
+
+```
+curl -X POST "http://localhost:3000/auth/token" -d "client_id=test-client&client_secret=test-secret"
+TOKEN=$(jq -r .access_token response.json)
+curl -X POST "http://localhost:3000/swift/message" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/xml" --data-binary @payment.xml
+```
+
+- Forward/Headers które otrzymuje bank (podczas przekazywania):
+  - `X-SWIFT-UETR` — identyfikator UETR wiadomości
+  - `X-SWIFT-Message-Id` — oryginalny message id
+  - `X-SWIFT-Charge-Bearer` — wartość `ChrgBr`
+  - `X-SWIFT-Currency` — waluta
+  - `X-SWIFT-Settlement-Date` — data rozliczenia
+  - `X-SWIFT-Sender-Account`, `X-SWIFT-Receiver-Account`
+  - (jeżeli dotyczy) `X-SWIFT-Callback-Url` — adres, na który bank może wysłać potwierdzenie
+  - (opłaty) `X-SWIFT-Fee-Total`, `X-SWIFT-Fee-Sender`, `X-SWIFT-Fee-Receiver`, `X-SWIFT-Fee-Intermediary`
+
+- Powiadomienia o opłatach (jeśli system wysyła info że bank ma zapłacić):
+  - Formularz XML prosty: `<FIToFICstmrCdtTrf><UETR>...</UETR><IntrBkSttlmAmt Ccy="PLN">5.00</IntrBkSttlmAmt></FIToFICstmrCdtTrf>`
+  - Nagłówki dodatkowe: `X-SWIFT-Fee-For` (`sender`|`receiver`) i `X-SWIFT-Fee-Amount`
+
+- Callback potwierdzający odbiór (bank → nasz serwer):
+  - Endpoint: `POST /api/bank/ack`
+  - Body (JSON): `{"status":"accepted","bank":"Bank Name","received_at":"ISOtime","message_id":"...","uetr":"...","receiver_account":"..."}`
+  - Odpowiedź: `200 {"status":"ok","uetr":...}`
+
+- Bezpieczeństwo / autoryzacja:
+  - Token zawiera `banks` — przed przyjęciem wiadomości sprawdzamy, czy `sender_bic` z XML znajduje się w tym zbiorze. Banki muszą używać tokenów przypisanych do swoich BIC-ów.
+  - W środowisku produkcyjnym rekomendujemy podpisy XML / JWT / mTLS; to jest prosty mock, więc tokeny są przechowywane w pamięci.
+
 ## Autorzy
 
 - Kacper Kowalski

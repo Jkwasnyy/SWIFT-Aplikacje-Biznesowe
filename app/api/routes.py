@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.services.swift_service import handle_swift_message
-from app.core.auth import issue_token, validate_token
+from app.services.parser import parse_xml
+from app.core.auth import issue_token, validate_token, get_token_claims
 from app.services.scheduler import cancel_pending
 from app.core.logger import log
 
@@ -40,27 +41,61 @@ def token():
 
 
 def _require_auth(req):
+    """Return token claims dict when auth ok, else False.
+
+    This allows callers to inspect claims (e.g. allowed `banks`).
+    """
     auth = req.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         return False
     token = auth.split(" ", 1)[1]
-    return validate_token(token)
+    if not validate_token(token):
+        return False
+    return get_token_claims(token) or {}
 
 
 @swift_bp.route("/swift/message", methods=["POST"])
 def receive_message():
-    if not _require_auth(request):
+    claims = _require_auth(request)
+    if not claims:
         return jsonify({"error": "unauthorized"}), 401
 
     xml_data = request.data.decode("utf-8")
+    try:
+        parsed = parse_xml(xml_data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+    allowed_banks = set(claims.get("banks", []))
+    sender_bic = getattr(parsed, "sender_bic", "")
+    if allowed_banks and sender_bic and sender_bic not in allowed_banks:
+        return jsonify({"error": "forbidden_sender_bic"}), 403
+
     result, status = handle_swift_message(xml_data)
     return jsonify(result), status
 
 
 @swift_bp.route("/swift/cancel/<uetr>", methods=["POST"])
 def cancel(uetr):
-    if not _require_auth(request):
+    claims = _require_auth(request)
+    if not claims:
         return jsonify({"error": "unauthorized"}), 401
+
+    # try to find pending entry and ensure caller is allowed to cancel for that sender
+    pending = None
+    try:
+        for entry in __import__("app.services.scheduler", fromlist=["list_pending"]).list_pending():
+            if entry.get("uetr") == uetr:
+                pending = entry
+                break
+    except Exception:
+        pending = None
+
+    if pending:
+        allowed_banks = set(claims.get("banks", []))
+        sender_bic = pending.get("from")
+        if allowed_banks and sender_bic and sender_bic not in allowed_banks:
+            return jsonify({"error": "forbidden"}), 403
 
     ok = cancel_pending(uetr)
     if not ok:

@@ -18,8 +18,51 @@ def handle_swift_message(xml):
             )
             return {"error": "Route not found"}, 404
 
-        fee_breakdown = calculate_fee_breakdown(message.charge_bearer, route)
+        fee_breakdown = calculate_fee_breakdown(message.charge_bearer, route, message.amount)
         estimated_seconds = estimate_route_seconds(route)
+
+        # Notify banks that are expected to pay fees immediately (so they can include it
+        # in any outgoing settlement). We notify sender and receiver if they have a non-zero share.
+        def _fee_xml(uetr, amount, currency):
+            return (
+                f"<FIToFICstmrCdtTrf>"
+                f"<UETR>{uetr}</UETR>"
+                f"<IntrBkSttlmAmt Ccy=\"{currency}\">{amount}</IntrBkSttlmAmt>"
+                f"</FIToFICstmrCdtTrf>"
+            )
+
+        try:
+            # sender
+            if float(fee_breakdown.get("sender_fee", "0.00")) > 0:
+                sender_meta = get_bank_info(message.sender_bic)
+                if sender_meta and sender_meta.get("url"):
+                    xml_fee = _fee_xml(message.uetr, fee_breakdown["sender_fee"], message.currency)
+                    headers = {
+                        "X-SWIFT-UETR": message.uetr,
+                        "X-SWIFT-Message-Id": message.message_id,
+                        "X-SWIFT-Fee-For": "sender",
+                        "X-SWIFT-Fee-Amount": fee_breakdown["sender_fee"],
+                        "X-SWIFT-Currency": message.currency,
+                    }
+                    status, resp = forward_message(sender_meta["url"], xml_fee, headers=headers)
+                    log(f"[FEE_NOTIFY] To sender {message.sender_bic} STATUS={status} RESP={resp}")
+
+            # receiver
+            if float(fee_breakdown.get("receiver_fee", "0.00")) > 0:
+                recv_meta = get_bank_info(message.receiver_bic)
+                if recv_meta and recv_meta.get("url"):
+                    xml_fee = _fee_xml(message.uetr, fee_breakdown["receiver_fee"], message.currency)
+                    headers = {
+                        "X-SWIFT-UETR": message.uetr,
+                        "X-SWIFT-Message-Id": message.message_id,
+                        "X-SWIFT-Fee-For": "receiver",
+                        "X-SWIFT-Fee-Amount": fee_breakdown["receiver_fee"],
+                        "X-SWIFT-Currency": message.currency,
+                    }
+                    status, resp = forward_message(recv_meta["url"], xml_fee, headers=headers)
+                    log(f"[FEE_NOTIFY] To receiver {message.receiver_bic} STATUS={status} RESP={resp}")
+        except Exception as e:
+            log(f"[FEE_NOTIFY_ERROR] {e}")
 
         # ===== RECEIVED STAGE =====
         log(
