@@ -10,6 +10,10 @@ services:
       APP_BIND_HOST: 0.0.0.0
       APP_PORT: 3000
       FLASK_DEBUG: "0"
+      # Point to eu-bank-system backend when running alongside it on the host:
+      EU_BANK_URL: http://host.docker.internal:8080/receive
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "3000:3000"
     depends_on:

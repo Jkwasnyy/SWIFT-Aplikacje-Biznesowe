@@ -14,6 +14,8 @@ def get_bank_name(port):
         3004: "Bank UK 2",
         3005: "Bank USA 1",
         3006: "Bank USA 2",
+        3007: "Bank EU DE 1",
+        3008: "Bank EU FR 1",
     }.get(port, f"Bank {port}")
 
 
@@ -58,6 +60,7 @@ def receive():
     closed_accounts = {
         "GB00CLOSED0000000000000000",
         "PL00000000000000000000000000",
+        "DE00CLOSED00000000000000",
     }
     if receiver_account in closed_accounts:
         return {"status": "rejected", "reason": "receiver_account_closed"}, 422

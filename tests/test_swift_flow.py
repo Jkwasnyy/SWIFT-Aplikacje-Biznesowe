@@ -135,6 +135,22 @@ class SwiftFlowTestCase(unittest.TestCase):
             ["PLBKPL01XXX", "UKBKGB01XXX", "UKBKGB02XXX", "USBKUS02XXX", "USBKUS01XXX"],
         )
 
+    def test_route_to_eu_bank(self):
+        route = get_route("PLBKPL01XXX", "DEBKDE01XXX")
+        self.assertEqual(route, ["PLBKPL01XXX", "DEBKDE01XXX"])
+
+    def test_external_eu_bank_skips_local_account_directory(self):
+        external_xml = SAMPLE_XML.replace("UKBKGB01XXX", "BANKDEXX").replace(
+            "GB29NWBK60161331926819",
+            "DE89370400440532013000",
+        )
+        with patch("app.services.inbox.add_incoming") as inbox_add:
+            result, status = handle_swift_message(external_xml)
+
+            self.assertEqual(status, 202)
+            self.assertEqual(result["receiver_bank"], "Deutsche Bank")
+            inbox_add.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

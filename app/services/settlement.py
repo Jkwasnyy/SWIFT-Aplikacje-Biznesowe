@@ -1,6 +1,6 @@
 from decimal import Decimal, ROUND_HALF_UP
 
-from app.core.config import PAYMENT_FEES, get_account_status, PAYMENT_FEE_PERCENT
+from app.core.config import PAYMENT_FEES, get_account_status, get_bank_metadata, PAYMENT_FEE_PERCENT
 
 
 def _money(value):
@@ -46,6 +46,12 @@ def calculate_fee_breakdown(charge_bearer, route, amount):
 
 
 def validate_receiver_account(receiver_bic, receiver_account):
+    bank_meta = get_bank_metadata(receiver_bic)
+    if bank_meta and bank_meta.get("external"):
+        if not receiver_account:
+            return False, "AccountNotFound"
+        return True, "OK"
+
     status = get_account_status(receiver_bic, receiver_account)
     if status is None:
         return False, "AccountNotFound"

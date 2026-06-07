@@ -8,6 +8,10 @@ BANK_HOST = os.getenv("BANK_HOST", "localhost")
 # Hostname used by mock banks when sending callbacks to the main app.
 APP_HOST = os.getenv("APP_HOST", "localhost")
 
+# URL for eu-bank-system or other real EU bank backends (override mock when set).
+# Example: http://host.docker.internal:8080/receive
+EU_BANK_URL = os.getenv("EU_BANK_URL", f"http://{BANK_HOST}:3007/receive")
+
 BANK_METADATA = {
     # BIC-like identifiers (4 char bank code + 2 char country + 2 char location + optional branch)
     "PLBKPL01XXX": {"name": "Bank Polska 1", "country": "PL", "url": f"http://{BANK_HOST}:3001/receive"},
@@ -16,6 +20,12 @@ BANK_METADATA = {
     "UKBKGB02XXX": {"name": "Bank UK 2", "country": "GB", "url": f"http://{BANK_HOST}:3004/receive"},
     "USBKUS01XXX": {"name": "Bank USA 1", "country": "US", "url": f"http://{BANK_HOST}:3005/receive"},
     "USBKUS02XXX": {"name": "Bank USA 2", "country": "US", "url": f"http://{BANK_HOST}:3006/receive"},
+    # EU / Eurozone mock banks
+    "DEBKDE01XXX": {"name": "Bank EU DE 1", "country": "DE", "url": f"http://{BANK_HOST}:3007/receive"},
+    "EUBKFR01XXX": {"name": "Bank EU FR 1", "country": "FR", "url": f"http://{BANK_HOST}:3008/receive"},
+    # eu-bank-system (German bank) — external backend, account validation delegated to the bank
+    "BANKDEXX": {"name": "Deutsche Bank", "country": "DE", "url": EU_BANK_URL, "external": True},
+    "BANKDEXXXXX": {"name": "Deutsche Bank", "country": "DE", "url": EU_BANK_URL, "external": True},
 }
 
 BANKS = {bic: data["url"] for bic, data in BANK_METADATA.items()}
@@ -48,6 +58,13 @@ ACCOUNT_DIRECTORY = {
     "USBKUS02XXX": {
         "US223456789012345678901234": "open",
     },
+    "DEBKDE01XXX": {
+        "DE89370400440532013000": "open",
+        "DE00CLOSED00000000000000": "closed",
+    },
+    "EUBKFR01XXX": {
+        "FR1420041010050500013M02606": "open",
+    },
 }
 
 
@@ -63,23 +80,37 @@ def get_account_status(bic, account_number):
 # between banks when no direct connection exists.
 NETWORK = {
     # PLBKPL01XXX connects to PLBKPL02XXX and UKBKGB01XXX
-    "PLBKPL01XXX": ["PLBKPL02XXX", "UKBKGB01XXX"],
+    "PLBKPL01XXX": ["PLBKPL02XXX", "UKBKGB01XXX", "DEBKDE01XXX"],
     "PLBKPL02XXX": ["PLBKPL01XXX", "USBKUS01XXX"],
-    "UKBKGB01XXX": ["UKBKGB02XXX", "PLBKPL01XXX"],
+    "UKBKGB01XXX": ["UKBKGB02XXX", "PLBKPL01XXX", "DEBKDE01XXX"],
     "UKBKGB02XXX": ["UKBKGB01XXX", "USBKUS02XXX"],
     "USBKUS01XXX": ["PLBKPL02XXX", "USBKUS02XXX"],
     "USBKUS02XXX": ["USBKUS01XXX", "UKBKGB02XXX"],
+    "DEBKDE01XXX": ["PLBKPL01XXX", "UKBKGB01XXX", "EUBKFR01XXX", "BANKDEXX", "BANKDEXXXXX"],
+    "EUBKFR01XXX": ["DEBKDE01XXX"],
+    "BANKDEXX": ["DEBKDE01XXX"],
+    "BANKDEXXXXX": ["DEBKDE01XXX"],
 }
 
 # Weighted latency graph used by route selection. Lower cost means a faster
 # expected payment path, even if it uses more intermediaries.
 NETWORK_LATENCY_SECONDS = {
-    "PLBKPL01XXX": {"PLBKPL02XXX": 5.0, "UKBKGB01XXX": 1.0},
+    "PLBKPL01XXX": {"PLBKPL02XXX": 5.0, "UKBKGB01XXX": 1.0, "DEBKDE01XXX": 1.0},
     "PLBKPL02XXX": {"PLBKPL01XXX": 5.0, "USBKUS01XXX": 5.0},
-    "UKBKGB01XXX": {"UKBKGB02XXX": 1.0, "PLBKPL01XXX": 1.0},
+    "UKBKGB01XXX": {"UKBKGB02XXX": 1.0, "PLBKPL01XXX": 1.0, "DEBKDE01XXX": 1.0},
     "UKBKGB02XXX": {"UKBKGB01XXX": 1.0, "USBKUS02XXX": 1.0},
     "USBKUS01XXX": {"PLBKPL02XXX": 5.0, "USBKUS02XXX": 1.0},
     "USBKUS02XXX": {"USBKUS01XXX": 1.0, "UKBKGB02XXX": 1.0},
+    "DEBKDE01XXX": {
+        "PLBKPL01XXX": 1.0,
+        "UKBKGB01XXX": 1.0,
+        "EUBKFR01XXX": 1.0,
+        "BANKDEXX": 0.5,
+        "BANKDEXXXXX": 0.5,
+    },
+    "EUBKFR01XXX": {"DEBKDE01XXX": 1.0},
+    "BANKDEXX": {"DEBKDE01XXX": 0.5},
+    "BANKDEXXXXX": {"DEBKDE01XXX": 0.5},
 }
 
 
