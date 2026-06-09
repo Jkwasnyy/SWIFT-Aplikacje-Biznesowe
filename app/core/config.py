@@ -154,8 +154,8 @@ PAYMENT_FEES = {
     "per_hop_fee": 0.25,
 }
 
-# Flat percentage fee applied to the payment amount (e.g. 0.05 == 5%)
-PAYMENT_FEE_PERCENT = 0.05
+# Flat percentage fee applied to the payment amount (e.g. 0.0035 == 0.35%)
+PAYMENT_FEE_PERCENT = 0.0035
 
 # Minimum estimated route time in seconds used for UI/cancellation windows
 DEFAULT_ESTIMATED_SECONDS = 10.0
@@ -164,15 +164,34 @@ DEFAULT_ESTIMATED_SECONDS = 10.0
 # Mock OAuth2 configuration (student project). In a real deployment these
 # values would be stored securely and OAuth flows handled by an identity
 # provider. This mock allows issuing short-lived bearer tokens for API calls.
+#
+# Per-bank credentials for integration (each client may act only for its BIC).
+BANK_OAUTH_CLIENTS = {
+    "PLBKPL01XXX": {"client_id": "bank-plbkpl01", "client_secret": "secret-plbkpl01"},
+    "PLBKPL02XXX": {"client_id": "bank-plbkpl02", "client_secret": "secret-plbkpl02"},
+    "UKBKGB01XXX": {"client_id": "bank-ukbkgb01", "client_secret": "secret-ukbkgb01"},
+    "UKBKGB02XXX": {"client_id": "bank-ukbkgb02", "client_secret": "secret-ukbkgb02"},
+    "USBKUS01XXX": {"client_id": "bank-usbkus01", "client_secret": "secret-usbkus01"},
+    "USBKUS02XXX": {"client_id": "bank-usbkus02", "client_secret": "secret-usbkus02"},
+    "DEBKDE01XXX": {"client_id": "bank-debkde01", "client_secret": "secret-debkde01"},
+    "EUBKFR01XXX": {"client_id": "bank-eubkfr01", "client_secret": "secret-eubkfr01"},
+    "BANKDEXX": {"client_id": "bank-bankdexx", "client_secret": "secret-bankdexx"},
+    "BANKDEXXXXX": {"client_id": "bank-bankdexxxxx", "client_secret": "secret-bankdexxxxx"},
+}
+
 OAUTH = {
     "token_ttl_seconds": 3600,
-    "clients": {"test-client": "test-secret"},
+    "clients": {
+        # Demo client for panel / tests — may act for all banks.
+        "test-client": "test-secret",
+        **{data["client_id"]: data["client_secret"] for data in BANK_OAUTH_CLIENTS.values()},
+    },
 }
 
 # Which banks each client is allowed to act for in this mock environment.
-# By default the demo client can act for all mock banks.
 CLIENT_BANKS = {
     "test-client": list(BANK_METADATA.keys()),
+    **{data["client_id"]: [bic] for bic, data in BANK_OAUTH_CLIENTS.items()},
 }
 
 
@@ -182,3 +201,6 @@ CANCEL_WINDOW_SECONDS = FORWARD_DELAY_SECONDS  # same period allowed for cancel
 
 # Bank callback endpoint used by mock banks to confirm receipt of a transfer.
 BANK_ACK_CALLBACK_URL = f"http://{APP_HOST}:3000/api/bank/ack"
+
+# Bank callback when recipient rejects a payment and initiates a return to sender.
+BANK_RETURN_CALLBACK_URL = f"http://{APP_HOST}:3000/api/bank/return"

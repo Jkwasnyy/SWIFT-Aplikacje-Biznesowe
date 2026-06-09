@@ -2,7 +2,7 @@ import threading
 from typing import Dict
 
 from app.core.config import FORWARD_DELAY_SECONDS
-from app.core.config import BANK_ACK_CALLBACK_URL
+from app.core.config import BANK_ACK_CALLBACK_URL, BANK_RETURN_CALLBACK_URL
 from app.core.logger import log
 from app.services.router import get_route, get_bank_metadata
 from app.services.forwarder import forward_message
@@ -48,7 +48,9 @@ def schedule_forward(message, xml, metadata=None):
                     log(f"[SCHEDULER] Missing metadata for hop {hop_bic}")
                     continue
                 url = meta.get("url")
-                callback_url = BANK_ACK_CALLBACK_URL if hop_bic == route[-1] else None
+                is_final_hop = hop_bic == route[-1]
+                callback_url = BANK_ACK_CALLBACK_URL if is_final_hop else None
+                return_callback_url = BANK_RETURN_CALLBACK_URL if is_final_hop else None
                 log(f"[SCHEDULER] Forwarding {uetr} to {hop_bic} @ {url}")
                 headers = {
                     "X-SWIFT-UETR": uetr,
@@ -68,6 +70,8 @@ def schedule_forward(message, xml, metadata=None):
                     headers["X-SWIFT-Fee-Intermediary"] = fee.get("intermediary_fee", "0.00")
                 if callback_url:
                     headers["X-SWIFT-Callback-Url"] = callback_url
+                if return_callback_url:
+                    headers["X-SWIFT-Return-Url"] = return_callback_url
                 status, resp = forward_message(
                     url,
                     xml,
@@ -80,22 +84,6 @@ def schedule_forward(message, xml, metadata=None):
                         f"[SETTLEMENT_FAILED] MSG={message.message_id} UETR={uetr} "
                         f"HOP={hop_bic} STATUS={status} REASON={resp}"
                     )
-                    # If the bank rejected due to account problems, notify the sender bank
-                    reason_text = str(resp).lower()
-                    if "receiver_account_closed" in reason_text or "receiver_account" in reason_text or "missing_settlement_amount" in reason_text:
-                        try:
-                            sender_bic = route[0]
-                            sender_meta = get_bank_metadata(sender_bic)
-                            if sender_meta and sender_meta.get("url"):
-                                fail_xml = (
-                                    f"<FIToFICstmrCdtTrf><UETR>{uetr}</UETR>"
-                                    f"<RejectionReason>{resp}</RejectionReason>"
-                                    f"</FIToFICstmrCdtTrf>"
-                                )
-                                forward_message(sender_meta["url"], fail_xml, headers={"X-SWIFT-UETR": uetr, "X-SWIFT-Message-Id": message.message_id})
-                                log(f"[NOTIFY_SENDER] Notified sender {sender_bic} about failure {uetr}")
-                        except Exception as e:
-                            log(f"[NOTIFY_SENDER_ERROR] {e}")
                     break
 
             if last_response and 200 <= last_response[0] < 300:

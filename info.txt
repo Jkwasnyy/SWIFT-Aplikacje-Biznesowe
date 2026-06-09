@@ -1,0 +1,379 @@
+INTEGRACJA BANKOWA — SWIFT Middleware
+=====================================
+Dokument dla banków i operatora. Opisuje co, kiedy i jak komunikują się banki z middleware.
+
+
+SPIS TREŚCI
+===========
+1. Endpointy
+2. Autoryzacja (kto się loguje tokenem)
+3. Pola XML — przelew od banku nadawcy
+4. Pełny przepływ przelewu (krok po kroku)
+5. Forward do banków pośredniczących i docelowego
+6. Opłaty SWIFT (0,35% + ChrgBr)
+7. Złe konto — dwa scenariusze (odrzucenie vs zwrot)
+8. Zwrot przelewu (bank odbiorcy → middleware → bank nadawcy)
+9. Przykładowe XML-e
+10. Checklista przed integracją
+
+
+1. ENDPOINTY
+============
+
+Bank nadawcy (wymaga tokena Bearer):
+  POST /auth/token              — pobranie tokenu
+  POST /swift/message           — wysłanie przelewu XML
+  POST /swift/cancel/<uetr>     — anulowanie (okno 5 s po „Wyślij”)
+
+Bank odbiorcy / callbacki (bez tokena):
+  POST /api/bank/ack            — potwierdzenie odbioru przelewu
+  POST /api/bank/return         — zwrot odrzuconego przelewu
+
+Operator (dashboard):
+  POST /api/send/<uetr>         — zatwierdzenie i wysłanie z inboxa
+  POST /api/cancel/<uetr>       — anulowanie z panelu
+
+Każdy bank odbiera forward na swoim:
+  POST <url z BANK_METADATA>/receive
+
+Dane logowania banków: bank_credentials.txt
+Przykładowe XML-e: payment.xml, mocks/test_payments/
+
+
+2. AUTORYZACJA
+==============
+
+KTO SIĘ AUTORYZUJE TOKENEM?
+  Tylko bank NADAWCY → middleware (POST /swift/message, /swift/cancel).
+
+KTO NIE WYMAGA TOKENA?
+  Middleware → banki na trasie (forward na /receive) — tylko XML + nagłówki X-SWIFT-*.
+  Bank odbiorcy → middleware (/api/bank/ack, /api/bank/return).
+
+JAK BANK NADAWCY POBIERA TOKEN:
+  POST /auth/token
+  Body (form): client_id, client_secret, grant_type=client_credentials
+  Odpowiedź: access_token (ważny 1 h)
+
+JAK BANK WYSYŁA PRZELEW:
+  POST /swift/message
+  Nagłówki:
+    Authorization: Bearer <access_token>
+    Content-Type: application/xml
+  Body: XML pacs.008
+
+WARUNEK:
+  BIC nadawcy w XML (DbtrAgt/BICFI) MUSI być zgodny z tokenem (pole "banks").
+  Inaczej: 403 forbidden_sender_bic.
+
+
+3. POLA XML — PRZELEW OD BANKU NADAWCY
+======================================
+
+Format: ISO 20022 pacs.008.001.08
+
+NADAWCA
+-------
+Pole w UI banku              | Element XML                    | Przykład
+-----------------------------|--------------------------------|---------------------------
+BIC banku nadawcy           | DbtrAgt / FinInstnId / BICFI   | PLBKPL01XXX
+Numer konta nadawcy          | DbtrAcct / Id / IBAN           | PL61109010140000071219812874
+Nazwa nadawcy                | Dbtr / Nm                      | Jan Kowalski
+
+ODBIORCA
+--------
+Pole w UI banku              | Element XML                    | Przykład
+-----------------------------|--------------------------------|---------------------------
+BIC banku odbiorcy           | CdtrAgt / FinInstnId / BICFI   | UKBKGB01XXX
+Numer konta odbiorcy         | CdtrAcct / Id / IBAN lub Othr  | GB29NWBK60161331926819
+Nazwa odbiorcy               | Cdtr / Nm                      | John Smith
+
+PŁATNOŚĆ
+--------
+Kwota                        | InstdAmt                       | 100.00 (Ccy="PLN")
+Kwota rozliczeniowa          | IntrBkSttlmAmt                 | 100.00 — WYMAGANE przy forward!
+Kto płaci opłaty             | ChrgBr                         | SHAR / DEBT / CRED
+Tytuł przelewu               | RmtInf / Ustrd                 | Faktura 123/2026
+Id wiadomości                | GrpHdr / MsgId                 | MSG-20260512-0001
+Id instrukcji                | PmtId / InstrId                | INST-20260512-0001
+UETR (śledzenie)             | PmtId / UETR                   | uuid 36 znaków
+Data utworzenia              | GrpHdr / CreDtTm               | 2026-05-12T09:30:00Z
+Data rozliczenia             | IntrBkSttlmDt                  | 2026-05-12
+
+CO MUSI SIĘ ZGADZAĆ W MIDDLEWARE (app/core/config.py):
+  - BIC nadawcy i odbiorcy w BANK_METADATA
+  - Konto odbiorcy w ACCOUNT_DIRECTORY pod BIC-em odbiorcy (status "open")
+  - Trasa między bankami w NETWORK
+  - BIC-y w formacie 11-znakowym, porównanie 1:1 (np. PLBKPL01XXX)
+
+Błędy:
+  403 — BIC nadawcy nie pasuje do tokena
+  404 — bank lub konto nieistniejące
+  422 — konto zamknięte
+
+
+4. PEŁNY PRZEPŁYW PRZELEWU
+==========================
+
+  Bank A                    Middleware (Ty)              Banki na trasie
+    |                              |                            |
+    | 1. POST /auth/token          |                            |
+    |<------ access_token ---------|                            |
+    |                              |                            |
+    | 2. POST /swift/message       |                            |
+    |    (Bearer + XML)            |                            |
+    |----------------------------->|                            |
+    |                              | walidacja BIC, konto       |
+    |                              | routing, opłaty 0,35%      |
+    |                              | FEE_NOTIFY do banków       |
+    |<------ 202 + uetr, route ----|                            |
+    |                              | → INBOX (dashboard)        |
+    |                              |                            |
+    |                    3. Operator klika „Wyślij”             |
+    |                              |                            |
+    |                              | 4. Po 5 s: forward XML     |
+    |                              |--------------------------->|
+    |                              |    (każdy bank na trasie)  |
+    |                              |                            |
+    |                              |<-- 5. callback /api/bank/ack (sukces)
+    |                              |    lub /api/bank/return (zwrot)
+
+WAŻNE:
+  - Po /swift/message przelew NIE idzie automatycznie — czeka w inboxie.
+  - Operator MUSI kliknąć „Wyślij” w dashboardzie.
+  - Po „Wyślij” masz 5 s na anulowanie (Cancel w panelu).
+
+
+5. FORWARD DO BANKÓW POŚREDNICZĄCYCH I DOCELOWEGO
+=================================================
+
+ZAMIERZONE ZACHOWANIE: ten sam XML idzie do WSZYSTKICH banków na trasie
+(pośrednicy + odbiorca końcowy), nie tylko do docelowego.
+
+Przykład PL → UK (bezpośrednio):
+  PLBKPL01XXX → UKBKGB01XXX  (1 forward)
+
+Przykład PL → USA (wieloskokowo):
+  PLBKPL01XXX → UKBKGB01XXX → UKBKGB02XXX → USBKUS02XXX → USBKUS01XXX
+  (4 forwardy — każdy bank dostaje POST /receive)
+
+CO WYSYŁAMY przy forwardzie:
+  Metoda:  POST <url banku>/receive
+  Body:    oryginalny XML od banku A (bez zmian)
+  Nagłówki:
+    X-SWIFT-UETR
+    X-SWIFT-Message-Id
+    X-SWIFT-Charge-Bearer
+    X-SWIFT-Currency
+    X-SWIFT-Settlement-Date
+    X-SWIFT-Sender-Account
+    X-SWIFT-Receiver-Account
+    X-SWIFT-Fee-Total / Fee-Sender / Fee-Receiver / Fee-Intermediary
+    X-SWIFT-Callback-Url         (tylko ostatni hop → /api/bank/ack)
+    X-SWIFT-Return-Url           (tylko ostatni hop → /api/bank/return)
+
+BEZ Bearer tokena — tylko XML + nagłówki.
+
+Mock-bank przy /receive sprawdza:
+  - waluta: PLN, EUR, USD, GBP
+  - XML: FIToFICstmrCdtTrf, UETR, IntrBkSttlmAmt
+  - konto nie na liście zamkniętych
+
+
+6. OPŁATY SWIFT
+===============
+
+KTO CO USTAWIA:
+  ChrgBr (SHAR/DEBT/CRED)  → bank NADAWCY w XML
+  Procent opłaty (0,35%)   → middleware w config.py (PAYMENT_FEE_PERCENT = 0.0035)
+
+PODZIAŁ wg ChrgBr:
+  DEBT → 100% opłaty płaci nadawca
+  CRED → 100% opłaty płaci odbiorca
+  SHAR → 50% / 50%
+
+CO ROBI MIDDLEWARE:
+  1. Liczy opłatę: kwota × 0,35%
+  2. Dzieli wg ChrgBr
+  3. Wysyła FEE_NOTIFY do banków z niezerową opłatą (zaraz po /swift/message)
+  4. Przy forwardzie dołącza nagłówki X-SWIFT-Fee-*
+
+CO ROBIĄ BANKI:
+  Faktyczne rozliczenie na kontach klientów — po stronie banków (symulator tego nie robi).
+
+Middleware NIE pobiera pieniędzy — tylko liczy i informuje.
+
+
+7. ZŁE KONTO — DWA SCENARIUSZE
+==============================
+
+SCENARIUSZ A — Middleware odrzuca WCZEŚNIEJ (przed forwardem)
+  Kiedy: POST /swift/message, konto nieistnieje lub zamknięte w ACCOUNT_DIRECTORY
+  Odpowiedź do banku A: 404 (not found) lub 422 (closed)
+  Przelew NIE trafia do banku odbiorcy.
+  ZWROT NIE JEST POTRZEBNY — przelew w ogóle nie wystartował.
+
+SCENARIUSZ B — Bank odbiorcy odrzuca PO forwardzie
+  Kiedy: przelew przeszedł walidację u middleware i dotarł do banku B,
+         ale bank B odrzuca (np. konto zablokowane u siebie)
+  Bank B → POST /api/bank/return (XML ze „Zwrot”)
+  Middleware → forward zwrotu do banku nadawcy
+  Logi: [RETURN_RECEIVED] → [RETURN_FORWARDED]
+
+To NIE jest fizyczny zwrot pieniędzy — to komunikat informujący bank nadawcy
+o odrzuceniu. W symulatorze nie ma prawdziwych kont.
+
+
+8. ZWROT PRZELEWU — SZCZEGÓŁY
+=============================
+
+ENDPOINT (bank odbiorcy → middleware):
+  POST http://<adres>:3000/api/bank/return
+  Content-Type: application/xml
+  Body: XML zwrotu (patrz niżej)
+
+CO ROBI MIDDLEWARE:
+  1. Odbiera XML zwrotu od banku odbiorcy
+  2. Sprawdza marker „Zwrot” (RmtInf/Ustrd lub nagłówek X-SWIFT-Message-Type: RETURN)
+  3. Czyta CdtrAgt/BICFI → bank nadawcy (dokąd przekazać)
+  4. Forwarduje ten sam XML na POST /receive banku nadawcy
+  5. Nagłówek: X-SWIFT-Message-Type: RETURN
+
+SKĄD BANK ODBIORCY ZNA ADRES ZWROTU:
+  Przy forwardzie dostaje nagłówek:
+  X-SWIFT-Return-Url: http://<host>:3000/api/bank/return
+
+POLA XML ZWROTU (wymagane):
+  RmtInf / Ustrd              = "Zwrot"
+  PmtId / UETR                = UETR oryginalnego przelewu
+  ReturnInf / Rsn             = powód (np. receiver_account_closed)
+  DbtrAgt / BICFI             = bank ZWRACAJĄCY (były odbiorca)
+  CdtrAgt / BICFI             = bank NADAWCY (dokąd idzie zwrot)
+  IntrBkSttlmAmt              = kwota
+
+ALTERNATYWA dla RmtInf „Zwrot”:
+  Nagłówek: X-SWIFT-Message-Type: RETURN
+
+MOCK-BANK (automatycznie):
+  Gdy konto odbiorcy zamknięte (GB00CLOSED..., PL000000..., DE00CLOSED...),
+  mock sam buduje XML zwrotu i woła POST /api/bank/return.
+
+CO WIDZI BANK NADAWCY:
+  POST /receive z X-SWIFT-Message-Type: RETURN
+  Odpowiedź mocka: {"status": "return_received", "uetr": "...", ...}
+
+
+9. PRZYKŁADOWE XML-E
+====================
+
+A) PRZELEW (bank nadawcy → middleware)
+--------------------------------------
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-20260512-0001</MsgId>
+      <CreDtTm>2026-05-12T09:30:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>INST-20260512-0001</InstrId>
+        <UETR>11111111-1111-4111-8111-111111111111</UETR>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="PLN">100.00</IntrBkSttlmAmt>
+      <InstdAmt Ccy="PLN">100.00</InstdAmt>
+      <ChrgBr>SHAR</ChrgBr>
+      <Dbtr><Nm>Jan Kowalski</Nm></Dbtr>
+      <DbtrAcct><Id><IBAN>PL61109010140000071219812874</IBAN></Id></DbtrAcct>
+      <DbtrAgt><FinInstnId><BICFI>PLBKPL01XXX</BICFI></FinInstnId></DbtrAgt>
+      <Cdtr><Nm>John Smith</Nm></Cdtr>
+      <CdtrAgt><FinInstnId><BICFI>UKBKGB01XXX</BICFI></FinInstnId></CdtrAgt>
+      <CdtrAcct><Id><Othr><Id>GB29NWBK60161331926819</Id></Othr></Id></CdtrAcct>
+      <RmtInf><Ustrd>Faktura 123/2026</Ustrd></RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>
+
+
+B) ZWROT (bank odbiorcy → middleware → bank nadawcy)
+----------------------------------------------------
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>RETURN-MSG-20260512-0001</MsgId>
+      <CreDtTm>2026-06-09T12:00:00Z</CreDtTm>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>RETURN-INST-20260512-0001</InstrId>
+        <UETR>11111111-1111-4111-8111-111111111111</UETR>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="GBP">100.00</IntrBkSttlmAmt>
+      <RmtInf>
+        <Ustrd>Zwrot</Ustrd>
+      </RmtInf>
+      <ReturnInf>
+        <Rsn>receiver_account_closed</Rsn>
+      </ReturnInf>
+      <DbtrAgt>
+        <FinInstnId><BICFI>UKBKGB01XXX</BICFI></FinInstnId>
+      </DbtrAgt>
+      <CdtrAgt>
+        <FinInstnId><BICFI>PLBKPL01XXX</BICFI></FinInstnId>
+      </CdtrAgt>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>
+
+
+10. CHECKLISTA PRZED INTEGRACJĄ
+================================
+
+PRZED SPOTKANIEM:
+[ ] run.bat uruchomione (app + mock-banki) lub docker compose up
+[ ] BIC-y i URL-e banków w BANK_METADATA (config.py)
+[ ] Konta testowe w ACCOUNT_DIRECTORY lub external: true
+[ ] Credentials rozdane z bank_credentials.txt
+[ ] Ustalony jeden scenariusz: BIC nadawcy, BIC odbiorcy, konto, kwota
+
+TEST HAPPY PATH:
+[ ] POST /auth/token → token
+[ ] POST /swift/message → 202, uetr, route
+[ ] Dashboard → „Wyślij”
+[ ] Logi: [SCHEDULER] Forwarding... → [COMPLETED]
+[ ] Callback: [COMPLETED] w logs.txt
+
+TEST ZWROTU (konto zamknięte u odbiorcy PO forwardzie):
+[ ] Przelew z kontem GB00CLOSED0000000000000000 (tylko jeśli przeszedł middleware)
+[ ] Logi: [RETURN_RECEIVED] → [RETURN_FORWARDED]
+[ ] Bank nadawcy: RECEIVED z Message-Type RETURN
+
+SIEC:
+[ ] Bank A widzi http://<twoj-ip>:3000
+[ ] Ty widzisz http://<ich-ip>/receive
+[ ] APP_HOST poprawny (Docker: swift-app, nie localhost)
+
+NA SPOTKANIU POWIEDZ:
+  „Bank nadawcy loguje się tokenem i wysyła XML. My walidujemy, routujemy,
+   liczymy opłatę 0,35% i po zatwierdzeniu w panelu przekazujemy do banków
+   na trasie. Przy odrzuceniu bank odbiorcy wysyła zwrot na /api/bank/return,
+   a my przekazujemy go do banku nadawcy.”
+
+KOMENDA ZWROTU:
+$returnXml = @"
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr><MsgId>RETURN-TEST</MsgId><CreDtTm>2026-06-09T12:00:00Z</CreDtTm></GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId><InstrId>RETURN-INST</InstrId><UETR>11111111-1111-4111-8111-111111111111</UETR></PmtId>
+      <IntrBkSttlmAmt Ccy="GBP">10.00</IntrBkSttlmAmt>
+      <RmtInf><Ustrd>Zwrot</Ustrd></RmtInf>
+      <ReturnInf><Rsn>receiver_account_closed</Rsn></ReturnInf>
+      <DbtrAgt><FinInstnId><BICFI>UKBKGB01XXX</BICFI></FinInstnId></DbtrAgt>
+      <CdtrAgt><FinInstnId><BICFI>PLBKPL01XXX</BICFI></FinInstnId></CdtrAgt>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>
+"@
+Invoke-WebRequest -Uri http://localhost:3000/api/bank/return -Method POST -ContentType "application/xml" -Headers @{"X-SWIFT-Message-Type"="RETURN"} -Body $returnXml -UseBasicParsing

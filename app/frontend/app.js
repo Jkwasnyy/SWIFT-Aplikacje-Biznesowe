@@ -22,6 +22,7 @@ function statusLabel(status) {
     queued: ["W kolejce", "badge-amber"],
     completed: ["Zakończone", "badge-green"],
     sent: ["Wysłane", "badge-green"],
+    returned: ["Zwrócone", "badge-orange"],
     cancelled: ["Anulowane", "badge-red"],
     error: ["Błąd", "badge-red"],
   };

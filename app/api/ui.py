@@ -301,6 +301,16 @@ def _build_dashboard_state():
                 item.update({"phase": "completed", "status": "error", "pending": False, "details": text})
         elif event == "COMPLETED":
             item.update({"phase": "completed", "status": "completed", "pending": False, "details": body.get("STATUS", "")})
+        elif event == "RETURN_FORWARDED":
+            item.update(
+                {
+                    "phase": "completed",
+                    "status": "returned",
+                    "pending": False,
+                    "details": body.get("REASON", body.get("RESP", "return_forwarded")),
+                    "receiver": body.get("TO", item.get("receiver", "")),
+                }
+            )
         elif event == "VALIDATION_FAILED":
             item.update({"phase": "completed", "status": "error", "pending": False, "details": body.get("REASON", "validation_failed")})
         elif event == "ROUTING_FAILED":

@@ -22,6 +22,23 @@ SAMPLE_XML_US = """<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.
   </FIToFICstmrCdtTrf>
 </Document>"""
 
+SAMPLE_XML_RECEIVER_IBAN = """<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr><MsgId>MSG-IBAN</MsgId><CreDtTm>2026-05-12T09:30:00Z</CreDtTm></GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId><InstrId>INST-IBAN</InstrId><UETR>bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb</UETR></PmtId>
+      <ChrgBr>SHAR</ChrgBr>
+      <Dbtr><Nm>Sender</Nm></Dbtr>
+      <DbtrAcct><Id><IBAN>PL62109010140000071219812875</IBAN></Id></DbtrAcct>
+      <DbtrAgt><FinInstnId><BICFI>PLBKPL02XXX</BICFI></FinInstnId></DbtrAgt>
+      <Cdtr><Nm>Receiver</Nm></Cdtr>
+      <CdtrAgt><FinInstnId><BICFI>PLBKPL01XXX</BICFI></FinInstnId></CdtrAgt>
+      <CdtrAcct><Id><IBAN>PL61109010140000071219812874</IBAN></Id></CdtrAcct>
+      <IntrBkSttlmAmt Ccy="PLN">60.00</IntrBkSttlmAmt>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>"""
+
 
 class AuthAndCurrencyTestCase(unittest.TestCase):
     def test_currency_from_receiver_bank(self):
@@ -34,6 +51,11 @@ class AuthAndCurrencyTestCase(unittest.TestCase):
         message = parse_xml(SAMPLE_XML_US)
         self.assertEqual(message.receiver_bic, "USBKUS01XXX")
         self.assertEqual(message.currency, "USD")
+
+    def test_parser_reads_receiver_iban(self):
+        message = parse_xml(SAMPLE_XML_RECEIVER_IBAN)
+        self.assertEqual(message.receiver_account, "PL61109010140000071219812874")
+        self.assertEqual(message.receiver_bic, "PLBKPL01XXX")
 
     def test_token_contains_single_bank_data(self):
         token = issue_token("test-client", "test-secret", bank_bic="PLBKPL01XXX")

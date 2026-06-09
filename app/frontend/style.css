@@ -274,6 +274,12 @@ body {
   border-color: rgba(52, 211, 153, 0.45);
 }
 
+.filter-returned.is-active {
+  background: rgba(251, 146, 60, 0.18);
+  color: #fed7aa;
+  border-color: rgba(251, 146, 60, 0.45);
+}
+
 .filter-cancelled.is-active,
 .filter-error.is-active {
   background: rgba(248, 113, 113, 0.18);
@@ -320,6 +326,11 @@ body {
 .badge-amber {
   background: rgba(251, 191, 36, 0.18);
   color: #fcd34d;
+}
+
+.badge-orange {
+  background: rgba(251, 146, 60, 0.18);
+  color: #fdba74;
 }
 
 .badge-red {

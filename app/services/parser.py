@@ -43,7 +43,9 @@ def parse_xml(xml_string):
     # =========================
     receiver_name = _find_text(root, ".//ns:Cdtr/ns:Nm")
     receiver_bic = _find_text(root, ".//ns:CdtrAgt/ns:FinInstnId/ns:BICFI")
-    receiver_account = _find_text(root, ".//ns:CdtrAcct/ns:Id/ns:Othr/ns:Id")
+    receiver_account = _find_text(root, ".//ns:CdtrAcct/ns:Id/ns:IBAN")
+    if not receiver_account:
+        receiver_account = _find_text(root, ".//ns:CdtrAcct/ns:Id/ns:Othr/ns:Id")
 
     # Waluta przelewu = waluta kraju banku konta docelowego.
     destination_currency = get_currency_for_bic(receiver_bic)

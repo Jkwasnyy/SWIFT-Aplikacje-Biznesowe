@@ -3,6 +3,7 @@ from app.services.swift_service import handle_swift_message
 from app.services.parser import parse_xml
 from app.core.auth import issue_token, validate_token, get_token_claims
 from app.services.scheduler import cancel_pending
+from app.services.return_service import handle_payment_return
 from app.core.logger import log
 
 swift_bp = Blueprint("swift", __name__)
@@ -116,3 +117,15 @@ def bank_ack():
         f"[COMPLETED] MSG={message_id} UETR={uetr} BANK={bank} RECEIVED_AT={received_at} STATUS=completed"
     )
     return jsonify({"status": "ok", "uetr": uetr}), 200
+
+
+@swift_bp.route("/api/bank/return", methods=["POST"])
+def bank_return():
+    """Recipient bank rejects a payment and sends return XML; forward to original sender."""
+    payload = request.get_json(silent=True) or {}
+    xml_data = request.data.decode("utf-8") if request.data else payload.get("xml", "")
+    if not xml_data:
+        return jsonify({"error": "missing_return_xml"}), 400
+
+    result, status = handle_payment_return(xml_data, headers=dict(request.headers))
+    return jsonify(result), status
