@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-1013</MsgId>
+      <CreDtTm>2026-05-18T12:12:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>INDA</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>INST-1013</InstrId>
+        <EndToEndId>NOTPROVIDED</EndToEndId>
+        <UETR>dddddddd-dddd-4ddd-8ddd-dddddddddddd</UETR>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="EUR">130.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
+      <InstdAmt Ccy="EUR">130.00</InstdAmt>
+      <ChrgBr>CRED</ChrgBr>
+      <Dbtr>
+        <Nm>Hans Mueller</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>DE89370400440532013000</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>DEBKDE01XXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <Cdtr>
+        <Nm>Pierre Dubois</Nm>
+      </Cdtr>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>EUBKFR01XXX</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+      <CdtrAcct>
+        <Id>
+          <IBAN>FR1420041010050500013M02606</IBAN>
+        </Id>
+      </CdtrAcct>
+      <RmtInf>
+        <Ustrd>Bank EU DE 1 -> Bank EU FR 1 (przelew strefy euro)</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

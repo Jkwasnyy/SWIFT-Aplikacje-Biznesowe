@@ -89,7 +89,8 @@ class SwiftFlowTestCase(unittest.TestCase):
         self.assertEqual(message.receiver_bic, "UKBKGB01XXX")
 
         self.assertEqual(message.amount, "100.00")
-        self.assertEqual(message.currency, "PLN")
+        # UK receiver -> GBP (waluta z banku konta docelowego, nie z XML)
+        self.assertEqual(message.currency, "GBP")
 
         self.assertEqual(message.remittance_info, "Invoice INV-1")
 

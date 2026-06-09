@@ -2,8 +2,8 @@
 <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
   <FIToFICstmrCdtTrf>
     <GrpHdr>
-      <MsgId>MSG-1004</MsgId>
-      <CreDtTm>2026-05-18T12:03:00Z</CreDtTm>
+      <MsgId>MSG-1010</MsgId>
+      <CreDtTm>2026-05-18T12:09:00Z</CreDtTm>
       <NbOfTxs>1</NbOfTxs>
       <SttlmInf>
         <SttlmMtd>INDA</SttlmMtd>
@@ -11,44 +11,46 @@
     </GrpHdr>
     <CdtTrfTxInf>
       <PmtId>
-        <InstrId>INST-1004</InstrId>
+        <InstrId>INST-1010</InstrId>
         <EndToEndId>NOTPROVIDED</EndToEndId>
-        <UETR>44444444-4444-4444-8444-444444444444</UETR>
+        <UETR>aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa</UETR>
       </PmtId>
-      <IntrBkSttlmAmt Ccy="PLN">40.00</IntrBkSttlmAmt>
+      <IntrBkSttlmAmt Ccy="USD">100.00</IntrBkSttlmAmt>
       <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
-      <InstdAmt Ccy="PLN">40.00</InstdAmt>
-      <ChrgBr>SHAR</ChrgBr>
+      <InstdAmt Ccy="USD">100.00</InstdAmt>
+      <ChrgBr>DEBT</ChrgBr>
       <Dbtr>
-        <Nm>Test Sender 4</Nm>
+        <Nm>Jane Doe</Nm>
       </Dbtr>
       <DbtrAcct>
         <Id>
-          <IBAN>PL61109010140000071219812874</IBAN>
+          <Othr>
+            <Id>US123456789012345678901234</Id>
+          </Othr>
         </Id>
       </DbtrAcct>
       <DbtrAgt>
         <FinInstnId>
-          <BICFI>PLBKPL01XXX</BICFI>
+          <BICFI>USBKUS01XXX</BICFI>
         </FinInstnId>
       </DbtrAgt>
       <Cdtr>
-        <Nm>Test Receiver 4</Nm>
+        <Nm>Robert Miller</Nm>
       </Cdtr>
       <CdtrAgt>
         <FinInstnId>
-          <BICFI>UKBKGB02XXX</BICFI>
+          <BICFI>USBKUS02XXX</BICFI>
         </FinInstnId>
       </CdtrAgt>
       <CdtrAcct>
         <Id>
           <Othr>
-            <Id>GB99NOTEXIST0000000000001</Id>
+            <Id>US223456789012345678901234</Id>
           </Othr>
         </Id>
       </CdtrAcct>
       <RmtInf>
-        <Ustrd>Test payment 4</Ustrd>
+        <Ustrd>Bank USA 1 -> Bank USA 2 (przelew wewnetrzny USA)</Ustrd>
       </RmtInf>
     </CdtTrfTxInf>
   </FIToFICstmrCdtTrf>

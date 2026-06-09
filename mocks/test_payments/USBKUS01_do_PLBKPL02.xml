@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-1014</MsgId>
+      <CreDtTm>2026-05-18T12:13:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>INDA</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>INST-1014</InstrId>
+        <EndToEndId>NOTPROVIDED</EndToEndId>
+        <UETR>eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee</UETR>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="USD">140.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
+      <InstdAmt Ccy="USD">140.00</InstdAmt>
+      <ChrgBr>SHAR</ChrgBr>
+      <Dbtr>
+        <Nm>Robert Miller</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <Othr>
+            <Id>US123456789012345678901234</Id>
+          </Othr>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>USBKUS01XXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <Cdtr>
+        <Nm>Tomasz Zielinski</Nm>
+      </Cdtr>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>PLBKPL02XXX</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+      <CdtrAcct>
+        <Id>
+          <IBAN>PL62109010140000071219812875</IBAN>
+        </Id>
+      </CdtrAcct>
+      <RmtInf>
+        <Ustrd>Bank USA 1 -> Bank Polska 2 (trasa wieloskokowa)</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

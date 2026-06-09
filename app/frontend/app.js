@@ -209,19 +209,50 @@ function renderDashboard(dashboard) {
   });
 }
 
+async function loadBanks() {
+  const select = document.getElementById("bank-select");
+  if (!select) return;
+
+  const response = await fetch("/api/banks");
+  const data = await response.json();
+  const banks = data.banks || [];
+
+  select.innerHTML = banks
+    .map(
+      (bank) =>
+        `<option value="${escapeHtml(bank.bic)}">${escapeHtml(bank.name)} (${escapeHtml(bank.bic)}) — ${escapeHtml(bank.currency)}</option>`,
+    )
+    .join("");
+}
+
 async function getToken() {
+  const bankBic = document.getElementById("bank-select")?.value || "";
   const response = await fetch("/api/token", {
     method: "POST",
     body: new URLSearchParams({
       client_id: "test-client",
       client_secret: "test-secret",
+      bank_bic: bankBic,
     }),
   });
   const data = await response.json();
   if (data.access_token) {
     token = data.access_token;
-    document.getElementById("token-box").innerHTML =
-      `<strong>Token gotowy</strong><br /><code>${escapeHtml(token)}</code>`;
+    const bank = data.bank || {};
+    document.getElementById("token-box").innerHTML = `
+      <strong>Token gotowy</strong>
+      <div class="token-bank">
+        <span>Bank</span>
+        <strong>${escapeHtml(bank.name || "-")}</strong>
+        <span>BIC</span>
+        <strong>${escapeHtml(bank.bic || "-")}</strong>
+        <span>Kraj</span>
+        <strong>${escapeHtml(bank.country || "-")}</strong>
+        <span>Waluta</span>
+        <strong>${escapeHtml(bank.currency || "-")}</strong>
+      </div>
+      <code>${escapeHtml(token)}</code>
+    `;
   } else {
     document.getElementById("token-box").textContent = JSON.stringify(data);
   }
@@ -287,5 +318,6 @@ document.getElementById("refresh-all").addEventListener("click", refreshAll);
 document.getElementById("refresh-logs").addEventListener("click", refreshLogs);
 
 bindStatusFilters();
+loadBanks();
 refreshAll();
 setInterval(refreshAll, 5000);

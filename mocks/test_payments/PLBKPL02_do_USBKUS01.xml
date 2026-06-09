@@ -2,8 +2,8 @@
 <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
   <FIToFICstmrCdtTrf>
     <GrpHdr>
-      <MsgId>MSG-1002</MsgId>
-      <CreDtTm>2026-05-18T12:01:00Z</CreDtTm>
+      <MsgId>MSG-1005</MsgId>
+      <CreDtTm>2026-05-18T12:04:00Z</CreDtTm>
       <NbOfTxs>1</NbOfTxs>
       <SttlmInf>
         <SttlmMtd>INDA</SttlmMtd>
@@ -11,29 +11,29 @@
     </GrpHdr>
     <CdtTrfTxInf>
       <PmtId>
-        <InstrId>INST-1002</InstrId>
+        <InstrId>INST-1005</InstrId>
         <EndToEndId>NOTPROVIDED</EndToEndId>
-        <UETR>22222222-2222-4222-8222-222222222222</UETR>
+        <UETR>55555555-5555-4555-8555-555555555555</UETR>
       </PmtId>
-      <IntrBkSttlmAmt Ccy="PLN">20.00</IntrBkSttlmAmt>
+      <IntrBkSttlmAmt Ccy="PLN">50.00</IntrBkSttlmAmt>
       <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
-      <InstdAmt Ccy="PLN">20.00</InstdAmt>
-      <ChrgBr>CRED</ChrgBr>
+      <InstdAmt Ccy="PLN">50.00</InstdAmt>
+      <ChrgBr>SHAR</ChrgBr>
       <Dbtr>
-        <Nm>Test Sender 2</Nm>
+        <Nm>Tomasz Zielinski</Nm>
       </Dbtr>
       <DbtrAcct>
         <Id>
-          <IBAN>PL61109010140000071219812874</IBAN>
+          <IBAN>PL62109010140000071219812875</IBAN>
         </Id>
       </DbtrAcct>
       <DbtrAgt>
         <FinInstnId>
-          <BICFI>PLBKPL01XXX</BICFI>
+          <BICFI>PLBKPL02XXX</BICFI>
         </FinInstnId>
       </DbtrAgt>
       <Cdtr>
-        <Nm>Test Receiver 2</Nm>
+        <Nm>Robert Miller</Nm>
       </Cdtr>
       <CdtrAgt>
         <FinInstnId>
@@ -48,7 +48,7 @@
         </Id>
       </CdtrAcct>
       <RmtInf>
-        <Ustrd>Test payment 2</Ustrd>
+        <Ustrd>Bank Polska 2 -> Bank USA 1 (bezposrednia trasa)</Ustrd>
       </RmtInf>
     </CdtTrfTxInf>
   </FIToFICstmrCdtTrf>

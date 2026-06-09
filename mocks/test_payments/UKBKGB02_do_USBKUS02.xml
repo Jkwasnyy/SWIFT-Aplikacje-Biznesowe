@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-1009</MsgId>
+      <CreDtTm>2026-05-18T12:08:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>INDA</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>INST-1009</InstrId>
+        <EndToEndId>NOTPROVIDED</EndToEndId>
+        <UETR>99999999-9999-4999-8999-999999999999</UETR>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="GBP">90.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
+      <InstdAmt Ccy="GBP">90.00</InstdAmt>
+      <ChrgBr>SHAR</ChrgBr>
+      <Dbtr>
+        <Nm>Emily Clark</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <Othr>
+            <Id>GB29NWBK60161331926820</Id>
+          </Othr>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>UKBKGB02XXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <Cdtr>
+        <Nm>Michael Johnson</Nm>
+      </Cdtr>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>USBKUS02XXX</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>US223456789012345678901234</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+      <RmtInf>
+        <Ustrd>Bank UK 2 -> Bank USA 2 (bezposrednia trasa)</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

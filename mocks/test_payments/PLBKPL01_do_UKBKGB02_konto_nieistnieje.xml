@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-1004</MsgId>
+      <CreDtTm>2026-05-18T12:03:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>INDA</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>INST-1004</InstrId>
+        <EndToEndId>NOTPROVIDED</EndToEndId>
+        <UETR>44444444-4444-4444-8444-444444444444</UETR>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="PLN">40.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
+      <InstdAmt Ccy="PLN">40.00</InstdAmt>
+      <ChrgBr>SHAR</ChrgBr>
+      <Dbtr>
+        <Nm>Maria Lewandowska</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>PL61109010140000071219812874</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>PLBKPL01XXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <Cdtr>
+        <Nm>Emily Clark</Nm>
+      </Cdtr>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>UKBKGB02XXX</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>GB99NOTEXIST0000000000001</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+      <RmtInf>
+        <Ustrd>Bank Polska 1 -> Bank UK 2 (konto nieistniejace)</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

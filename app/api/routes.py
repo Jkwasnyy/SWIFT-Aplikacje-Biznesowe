@@ -32,7 +32,8 @@ def token():
     if grant != "client_credentials":
         return jsonify({"error": "unsupported_grant_type"}), 400
 
-    token = issue_token(client_id, client_secret)
+    bank_bic = request.form.get("bank_bic")
+    token = issue_token(client_id, client_secret, bank_bic=bank_bic)
     if not token:
         return jsonify({"error": "invalid_client"}), 401
     # Normalize token_type

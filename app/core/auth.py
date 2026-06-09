@@ -1,33 +1,51 @@
 import time
 import uuid
 from threading import Lock
-from app.core.config import OAUTH, CLIENT_BANKS
+from app.core.config import OAUTH, CLIENT_BANKS, build_bank_claim
 
 # In-memory token store: token -> (client_id, expires_at)
 _TOKENS = {}
 _LOCK = Lock()
 
 
-def issue_token(client_id: str, client_secret: str):
+def issue_token(client_id: str, client_secret: str, bank_bic: str = None):
     clients = OAUTH.get("clients", {})
     expected = clients.get(client_id)
     if expected is None or expected != client_secret:
+        return None
+
+    allowed_bics = CLIENT_BANKS.get(client_id, [])
+    if not allowed_bics:
+        return None
+
+    if bank_bic:
+        if bank_bic not in allowed_bics:
+            return None
+        selected_bic = bank_bic
+    else:
+        selected_bic = allowed_bics[0]
+
+    bank = build_bank_claim(selected_bic)
+    if not bank:
         return None
 
     token = str(uuid.uuid4())
     ttl = OAUTH.get("token_ttl_seconds", 3600)
     expires_at = int(time.time()) + ttl
 
-    # attach claims (which banks this client can act for)
-    banks = CLIENT_BANKS.get(client_id, [])
-    claims = {"banks": banks}
+    # Token reprezentuje jeden bank — pełne dane + BIC do autoryzacji nadawcy.
+    claims = {"banks": [selected_bic], "bank": bank}
 
     with _LOCK:
         _TOKENS[token] = (client_id, expires_at, claims)
 
-    result = {"access_token": token, "token_type": "bearer", "expires_in": ttl}
-    if banks:
-        result["banks"] = banks
+    result = {
+        "access_token": token,
+        "token_type": "bearer",
+        "expires_in": ttl,
+        "bank": bank,
+        "banks": [selected_bic],
+    }
     return result
 
 

@@ -1,0 +1,9 @@
+﻿mock_bank|3001|3412
+mock_bank|3002|18560
+mock_bank|3003|22408
+mock_bank|3004|17568
+mock_bank|3005|1800
+mock_bank|3006|9668
+mock_bank|3007|7104
+mock_bank|3008|15132
+app_main|app|7132

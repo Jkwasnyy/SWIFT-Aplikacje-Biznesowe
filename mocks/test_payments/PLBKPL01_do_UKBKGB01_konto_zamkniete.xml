@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-1003</MsgId>
+      <CreDtTm>2026-05-18T12:02:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>INDA</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>INST-1003</InstrId>
+        <EndToEndId>NOTPROVIDED</EndToEndId>
+        <UETR>33333333-3333-4333-8333-333333333333</UETR>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="PLN">30.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
+      <InstdAmt Ccy="PLN">30.00</InstdAmt>
+      <ChrgBr>DEBT</ChrgBr>
+      <Dbtr>
+        <Nm>Piotr Wisniewski</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>PL61109010140000071219812874</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>PLBKPL01XXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <Cdtr>
+        <Nm>James Brown</Nm>
+      </Cdtr>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>UKBKGB01XXX</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>GB00CLOSED0000000000000000</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+      <RmtInf>
+        <Ustrd>Bank Polska 1 -> Bank UK 1 (konto zamkniete)</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

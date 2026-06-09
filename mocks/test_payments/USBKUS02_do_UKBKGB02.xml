@@ -2,8 +2,8 @@
 <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
   <FIToFICstmrCdtTrf>
     <GrpHdr>
-      <MsgId>MSG-1003</MsgId>
-      <CreDtTm>2026-05-18T12:02:00Z</CreDtTm>
+      <MsgId>MSG-1011</MsgId>
+      <CreDtTm>2026-05-18T12:10:00Z</CreDtTm>
       <NbOfTxs>1</NbOfTxs>
       <SttlmInf>
         <SttlmMtd>INDA</SttlmMtd>
@@ -11,44 +11,46 @@
     </GrpHdr>
     <CdtTrfTxInf>
       <PmtId>
-        <InstrId>INST-1003</InstrId>
+        <InstrId>INST-1011</InstrId>
         <EndToEndId>NOTPROVIDED</EndToEndId>
-        <UETR>33333333-3333-4333-8333-333333333333</UETR>
+        <UETR>bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb</UETR>
       </PmtId>
-      <IntrBkSttlmAmt Ccy="PLN">30.00</IntrBkSttlmAmt>
+      <IntrBkSttlmAmt Ccy="USD">110.00</IntrBkSttlmAmt>
       <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
-      <InstdAmt Ccy="PLN">30.00</InstdAmt>
-      <ChrgBr>DEBT</ChrgBr>
+      <InstdAmt Ccy="USD">110.00</InstdAmt>
+      <ChrgBr>SHAR</ChrgBr>
       <Dbtr>
-        <Nm>Test Sender 3</Nm>
+        <Nm>Michael Johnson</Nm>
       </Dbtr>
       <DbtrAcct>
         <Id>
-          <IBAN>PL61109010140000071219812874</IBAN>
+          <Othr>
+            <Id>US223456789012345678901234</Id>
+          </Othr>
         </Id>
       </DbtrAcct>
       <DbtrAgt>
         <FinInstnId>
-          <BICFI>PLBKPL01XXX</BICFI>
+          <BICFI>USBKUS02XXX</BICFI>
         </FinInstnId>
       </DbtrAgt>
       <Cdtr>
-        <Nm>Test Receiver 3</Nm>
+        <Nm>Emily Clark</Nm>
       </Cdtr>
       <CdtrAgt>
         <FinInstnId>
-          <BICFI>UKBKGB01XXX</BICFI>
+          <BICFI>UKBKGB02XXX</BICFI>
         </FinInstnId>
       </CdtrAgt>
       <CdtrAcct>
         <Id>
           <Othr>
-            <Id>GB00CLOSED0000000000000000</Id>
+            <Id>GB29NWBK60161331926820</Id>
           </Othr>
         </Id>
       </CdtrAcct>
       <RmtInf>
-        <Ustrd>Test payment 3</Ustrd>
+        <Ustrd>Bank USA 2 -> Bank UK 2 (bezposrednia trasa)</Ustrd>
       </RmtInf>
     </CdtTrfTxInf>
   </FIToFICstmrCdtTrf>

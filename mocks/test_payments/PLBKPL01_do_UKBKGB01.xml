@@ -20,7 +20,7 @@
       <InstdAmt Ccy="PLN">10.00</InstdAmt>
       <ChrgBr>SHAR</ChrgBr>
       <Dbtr>
-        <Nm>Test Sender 1</Nm>
+        <Nm>Jan Kowalski</Nm>
       </Dbtr>
       <DbtrAcct>
         <Id>
@@ -33,7 +33,7 @@
         </FinInstnId>
       </DbtrAgt>
       <Cdtr>
-        <Nm>Test Receiver 1</Nm>
+        <Nm>John Smith</Nm>
       </Cdtr>
       <CdtrAgt>
         <FinInstnId>
@@ -48,7 +48,7 @@
         </Id>
       </CdtrAcct>
       <RmtInf>
-        <Ustrd>Test payment 1</Ustrd>
+        <Ustrd>Bank Polska 1 -> Bank UK 1 (bezposrednia trasa)</Ustrd>
       </RmtInf>
     </CdtTrfTxInf>
   </FIToFICstmrCdtTrf>

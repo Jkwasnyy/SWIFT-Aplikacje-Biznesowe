@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-1002</MsgId>
+      <CreDtTm>2026-05-18T12:01:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>INDA</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>INST-1002</InstrId>
+        <EndToEndId>NOTPROVIDED</EndToEndId>
+        <UETR>22222222-2222-4222-8222-222222222222</UETR>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="PLN">20.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-18</IntrBkSttlmDt>
+      <InstdAmt Ccy="PLN">20.00</InstdAmt>
+      <ChrgBr>CRED</ChrgBr>
+      <Dbtr>
+        <Nm>Anna Nowak</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>PL61109010140000071219812874</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>PLBKPL01XXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <Cdtr>
+        <Nm>Jane Doe</Nm>
+      </Cdtr>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>USBKUS01XXX</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>US123456789012345678901234</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+      <RmtInf>
+        <Ustrd>Bank Polska 1 -> Bank USA 1 (trasa wieloskokowa, ChrgBr=CRED)</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

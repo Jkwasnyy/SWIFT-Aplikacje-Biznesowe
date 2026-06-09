@@ -5,6 +5,7 @@ from collections import OrderedDict
 from app.services import scheduler
 from app.services import inbox
 from app.core.auth import issue_token
+from app.core.config import build_bank_claim, BANK_METADATA
 from app.services.scheduler import schedule_forward
 
 ui_bp = Blueprint("ui", __name__)
@@ -429,12 +430,23 @@ def api_send(uetr):
     ), 202
 
 
+@ui_bp.route("/api/banks")
+def api_banks():
+    banks = []
+    for bic, meta in BANK_METADATA.items():
+        claim = build_bank_claim(bic)
+        if claim:
+            banks.append(claim)
+    return jsonify({"banks": banks})
+
+
 @ui_bp.route("/api/token", methods=["POST"])
 def api_token():
     # simple helper to fetch mock token for demo purposes
     client_id = request.form.get("client_id", "test-client")
     client_secret = request.form.get("client_secret", "test-secret")
-    token = issue_token(client_id, client_secret)
+    bank_bic = request.form.get("bank_bic")
+    token = issue_token(client_id, client_secret, bank_bic=bank_bic)
     if not token:
         return jsonify({"error": "invalid_client"}), 401
     return jsonify(token)

@@ -35,6 +35,41 @@ def get_bank_metadata(bic):
     return BANK_METADATA.get(bic)
 
 
+# Waluta domyślna dla kraju banku odbiorcy (konto docelowe).
+COUNTRY_CURRENCY = {
+    "PL": "PLN",
+    "GB": "GBP",
+    "US": "USD",
+    "DE": "EUR",
+    "FR": "EUR",
+}
+
+
+def get_currency_for_country(country):
+    return COUNTRY_CURRENCY.get(country, "")
+
+
+def get_currency_for_bic(bic):
+    meta = BANK_METADATA.get(bic)
+    if not meta:
+        return ""
+    return get_currency_for_country(meta.get("country", ""))
+
+
+def build_bank_claim(bic):
+    """Publiczne dane banku do osadzenia w tokenie (bez URL)."""
+    meta = BANK_METADATA.get(bic)
+    if not meta:
+        return None
+    country = meta.get("country", "")
+    return {
+        "bic": bic,
+        "name": meta["name"],
+        "country": country,
+        "currency": get_currency_for_country(country),
+    }
+
+
 # Known accounts used by the simulator. Closed and missing accounts are used
 # to exercise error handling in the transfer flow.
 ACCOUNT_DIRECTORY = {

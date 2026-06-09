@@ -111,12 +111,24 @@ W panelu możesz:
 - podejrzeć ostatnie wpisy z `logs.txt`,
 - anulować przelew w oknie anulowania.
 
-Pliki scenariuszy testowych znajdziesz w `mocks/test_payments/`:
+Pliki scenariuszy testowych znajdziesz w `mocks/test_payments/`. Nazwy plików mają format `{BIC_nadawcy}_do_{BIC_odbiorcy}.xml`:
 
-- `payment1.xml` - poprawny przelew z bezpośrednią trasą
-- `payment2.xml` - poprawny przelew z trasą wieloskokową i innym `ChrgBr`
-- `payment3.xml` - przelew na zamknięte konto
-- `payment4.xml` - przelew na nieistniejące konto
+| Plik | Nadawca | Odbiorca | Opis |
+|------|---------|----------|------|
+| `PLBKPL01_do_UKBKGB01.xml` | Bank Polska 1 | Bank UK 1 | poprawny przelew, bezpośrednia trasa |
+| `PLBKPL01_do_USBKUS01.xml` | Bank Polska 1 | Bank USA 1 | trasa wieloskokowa, `ChrgBr=CRED` |
+| `PLBKPL01_do_UKBKGB01_konto_zamkniete.xml` | Bank Polska 1 | Bank UK 1 | konto odbiorcy zamknięte |
+| `PLBKPL01_do_UKBKGB02_konto_nieistnieje.xml` | Bank Polska 1 | Bank UK 2 | konto odbiorcy nieistnieje |
+| `PLBKPL02_do_USBKUS01.xml` | Bank Polska 2 | Bank USA 1 | bezpośrednia trasa |
+| `PLBKPL02_do_PLBKPL01.xml` | Bank Polska 2 | Bank Polska 1 | przelew między bankami PL |
+| `UKBKGB01_do_PLBKPL01.xml` | Bank UK 1 | Bank Polska 1 | bezpośrednia trasa |
+| `UKBKGB01_do_DEBKDE01.xml` | Bank UK 1 | Bank EU DE 1 | bezpośrednia trasa |
+| `UKBKGB02_do_USBKUS02.xml` | Bank UK 2 | Bank USA 2 | bezpośrednia trasa |
+| `USBKUS01_do_USBKUS02.xml` | Bank USA 1 | Bank USA 2 | przelew wewnętrzny USA |
+| `USBKUS01_do_PLBKPL02.xml` | Bank USA 1 | Bank Polska 2 | trasa wieloskokowa |
+| `USBKUS02_do_UKBKGB02.xml` | Bank USA 2 | Bank UK 2 | bezpośrednia trasa |
+| `DEBKDE01_do_PLBKPL01.xml` | Bank EU DE 1 | Bank Polska 1 | bezpośrednia trasa |
+| `DEBKDE01_do_EUBKFR01.xml` | Bank EU DE 1 | Bank EU FR 1 | przelew strefy euro |
 
 ### 5. Start ręczny (opcjonalnie)
 
@@ -194,6 +206,64 @@ W tym symulatorze to pole ustawia bank wysyłający jeszcze przed wysłaniem wia
 - routing między bankami
 - forward wiadomości
 - logowanie operacji
+
+## Endpointy API
+
+Poniżej pełna lista endpointów w projekcie. Główna aplikacja działa pod `http://localhost:3000`, mock-banki na portach `3001`–`3008`.
+
+### Główna aplikacja (`app/` — port 3000)
+
+#### Frontend i dokumentacja
+
+| Metoda | Endpoint | Opis |
+|--------|----------|------|
+| `GET` | `/` | Panel operatorski (frontend) |
+| `GET` | `/assets/<path>` | Pliki statyczne frontendu (CSS, JS) |
+| `GET` | `/docs` | Interaktywna dokumentacja Swagger UI |
+| `GET` | `/api/openapi.json` | Specyfikacja OpenAPI 3.0 w formacie JSON |
+
+#### Autoryzacja
+
+| Metoda | Endpoint | Opis |
+|--------|----------|------|
+| `POST` | `/auth/token` | Wydaje token Bearer (OAuth2 `client_credentials`); wymaga `client_id` i `client_secret` w body lub Basic Auth; opcjonalnie `bank_bic` |
+| `POST` | `/api/token` | Uproszczony endpoint do pobrania tokenu demo z panelu UI |
+
+#### Przelewy SWIFT (integracja bankowa)
+
+| Metoda | Endpoint | Opis |
+|--------|----------|------|
+| `POST` | `/swift/message` | Przyjmuje komunikat płatności XML; waliduje, routuje i kolejkuje przelew; wymaga nagłówka `Authorization: Bearer` |
+| `POST` | `/swift/cancel/<uetr>` | Anuluje oczekujący przelew po UETR w oknie anulowania; wymaga tokenu Bearer |
+| `POST` | `/api/bank/ack` | Callback od mock-banku potwierdzający odbiór przelewu (JSON z `uetr`, `message_id`, `bank`) |
+
+#### Panel operatorski (dashboard)
+
+| Metoda | Endpoint | Opis |
+|--------|----------|------|
+| `GET` | `/api/dashboard` | Zwraca stan panelu: przelewy przychodzące, oczekujące i zakończone wraz z metrykami |
+| `GET` | `/api/pending` | Lista przelewów zaplanowanych do wysłania (kolejka schedulera) |
+| `GET` | `/api/logs` | Ostatnie 200 linii z pliku `logs.txt` |
+| `GET` | `/api/banks` | Lista dostępnych banków (BIC, nazwa, kraj, waluta) |
+| `POST` | `/api/send/<uetr>` | Wysyła zatwierdzony przelew z kolejki przychodzącej do schedulera |
+| `POST` | `/api/cancel/<uetr>` | Anuluje przelew z panelu UI (bez tokenu — wersja operatorska) |
+
+### Mock-banki (`mocks/mock_bank.py` — porty 3001–3008)
+
+Każdy mock-bank nasłuchuje na własnym porcie i udostępnia jeden endpoint odbioru:
+
+| Metoda | Endpoint | Port | Bank |
+|--------|----------|------|------|
+| `POST` | `/receive` | `3001` | Bank Polska 1 (`PLBKPL01XXX`) |
+| `POST` | `/receive` | `3002` | Bank Polska 2 (`PLBKPL02XXX`) |
+| `POST` | `/receive` | `3003` | Bank UK 1 (`UKBKGB01XXX`) |
+| `POST` | `/receive` | `3004` | Bank UK 2 (`UKBKGB02XXX`) |
+| `POST` | `/receive` | `3005` | Bank USA 1 (`USBKUS01XXX`) |
+| `POST` | `/receive` | `3006` | Bank USA 2 (`USBKUS02XXX`) |
+| `POST` | `/receive` | `3007` | Bank EU DE 1 (`DEBKDE01XXX`) |
+| `POST` | `/receive` | `3008` | Bank EU FR 1 (`EUBKFR01XXX`) |
+
+Endpoint `/receive` przyjmuje przekazaną wiadomość XML wraz z nagłówkami `X-SWIFT-*`, waliduje ją i zwraca `202 Accepted` albo błąd; opcjonalnie wysyła callback na `/api/bank/ack`.
 
 ## Realistyczne rozszerzenia
 
